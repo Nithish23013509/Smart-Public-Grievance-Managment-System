@@ -7,7 +7,7 @@ const Home = () => {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#fff' }}>
 
       {/* ===== TOP GOV BANNER ===== */}
-      <div style={{ background: '#1a1a2e', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', padding: '0.4rem 0' }}>
+      <div className="top-gov-banner" style={{ background: '#1a1a2e', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', padding: '0.4rem 0' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Government of Tamil Nadu — Official Grievance Portal</span>
           <div style={{ display: 'flex', gap: '1.25rem' }}>

@@ -1,51 +1,62 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building } from 'lucide-react';
+import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building, Menu, X } from 'lucide-react';
 
 const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const closeSidebar = () => setSidebarOpen(false);
 
   const renderSidebarLinks = () => {
     if (!user) return null;
     if (user.role === 'CITIZEN') return (
       <>
-        <NavLink to="/citizen/dashboard" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
-        <NavLink to="/citizen/complaints/new" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><PlusCircle size={18} /> Submit Complaint</NavLink>
-        <NavLink to="/citizen/complaints" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> My Complaints</NavLink>
-        <NavLink to="/citizen/notifications" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
-        <NavLink to="/citizen/profile" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
+        <NavLink to="/citizen/dashboard" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/citizen/complaints/new" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><PlusCircle size={18} /> Submit Complaint</NavLink>
+        <NavLink to="/citizen/complaints" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> My Complaints</NavLink>
+        <NavLink to="/citizen/notifications" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
+        <NavLink to="/citizen/profile" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
       </>
     );
     if (user.role === 'OFFICER') return (
       <>
-        <NavLink to="/officer/dashboard" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
-        <NavLink to="/officer/notifications" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
-        <NavLink to="/officer/profile" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
+        <NavLink to="/officer/dashboard" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/officer/notifications" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
+        <NavLink to="/officer/profile" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
       </>
     );
     if (user.role === 'ADMIN') return (
       <>
-        <NavLink to="/admin/dashboard" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
-        <NavLink to="/admin/complaints" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> All Complaints</NavLink>
-        <NavLink to="/admin/users" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Users size={18} /> Users & Officers</NavLink>
-        <NavLink to="/admin/departments" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Building size={18} /> Departments</NavLink>
-        <NavLink to="/admin/notifications" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
-        <NavLink to="/admin/profile" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
+        <NavLink to="/admin/dashboard" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/admin/complaints" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> All Complaints</NavLink>
+        <NavLink to="/admin/users" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Users size={18} /> Users & Officers</NavLink>
+        <NavLink to="/admin/departments" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Building size={18} /> Departments</NavLink>
+        <NavLink to="/admin/notifications" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
+        <NavLink to="/admin/profile" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
       </>
     );
   };
 
   return (
     <div className="dashboard-layout">
-      <aside className="sidebar">
-        <div className="sidebar-header" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <div className="sidebar-logo-icon">🏛️</div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2 }}>SmartGrievance</div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Government Portal</div>
+      {/* Mobile overlay */}
+      <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar}></div>
+
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flex: 1 }} onClick={() => navigate('/')}>
+            <div className="sidebar-logo-icon">🏛️</div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2 }}>SmartGrievance</div>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Government Portal</div>
+            </div>
           </div>
+          <button className="mobile-menu-btn" onClick={closeSidebar} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}>
+            <X size={24} />
+          </button>
         </div>
 
         {/* Gold accent line */}
@@ -77,16 +88,21 @@ const DashboardLayout = () => {
         </div>
 
         <header className="top-header">
-          <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.9rem' }}>
-            {user?.role === 'CITIZEN' ? 'Citizen' : user?.role === 'OFFICER' ? 'Officer' : 'Administrator'} Portal
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--color-text)', cursor: 'pointer', display: 'flex' }}>
+              <Menu size={24} />
+            </button>
+            <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.9rem' }}>
+              {user?.role === 'CITIZEN' ? 'Citizen' : user?.role === 'OFFICER' ? 'Officer' : 'Administrator'} Portal
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ textAlign: 'right' }}>
+            <div className="desktop-only" style={{ textAlign: 'right' }}>
               <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user?.fullName}</div>
               <div style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{user?.email}</div>
             </div>
             <div style={{
-              width: '38px', height: '38px', borderRadius: '50%',
+              width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
               background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
               color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 700, fontSize: '0.9rem'
