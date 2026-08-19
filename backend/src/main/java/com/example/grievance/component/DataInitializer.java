@@ -1,0 +1,138 @@
+package com.example.grievance.component;
+
+import com.example.grievance.entity.ComplaintCategory;
+import com.example.grievance.entity.Department;
+import com.example.grievance.entity.District;
+import com.example.grievance.entity.Role;
+import com.example.grievance.entity.User;
+import com.example.grievance.entity.enums.RoleName;
+import com.example.grievance.repository.ComplaintCategoryRepository;
+import com.example.grievance.repository.DepartmentRepository;
+import com.example.grievance.repository.DistrictRepository;
+import com.example.grievance.repository.RoleRepository;
+import com.example.grievance.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class DataInitializer implements CommandLineRunner {
+
+    private final RoleRepository roleRepository;
+    private final DepartmentRepository departmentRepository;
+    private final ComplaintCategoryRepository categoryRepository;
+    private final DistrictRepository districtRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Override
+    public void run(String... args) {
+        seedRoles();
+        seedDistrict();
+        seedDepartments();
+        seedCategories();
+        seedTestUsers();
+    }
+
+    private void seedRoles() {
+        for (RoleName roleName : RoleName.values()) {
+            if (!roleRepository.existsByName(roleName)) {
+                Role role = new Role();
+                role.setName(roleName);
+                roleRepository.save(role);
+                log.info("Seeded role: {}", roleName);
+            }
+        }
+    }
+
+    private void seedDistrict() {
+        if (districtRepository.count() == 0) {
+            District district = new District();
+            district.setName("Chennai");
+            district.setCode("CHN");
+            districtRepository.save(district);
+            log.info("Seeded district: Chennai");
+        }
+    }
+
+    private void seedDepartments() {
+        if (departmentRepository.count() == 0) {
+            List<String> depts = List.of(
+                    "Municipal Administration and Water Supply",
+                    "Revenue and Disaster Management",
+                    "Highways",
+                    "Health and Family Welfare",
+                    "School Education"
+            );
+            for (String deptName : depts) {
+                Department dept = new Department();
+                dept.setName(deptName);
+                departmentRepository.save(dept);
+            }
+            log.info("Seeded {} departments", depts.size());
+        }
+    }
+
+    private void seedCategories() {
+        if (categoryRepository.count() == 0) {
+            List<String> categories = List.of(
+                    "Roads",
+                    "Water Supply",
+                    "Street Lights",
+                    "Garbage",
+                    "Drainage",
+                    "Other"
+            );
+            for (String catName : categories) {
+                ComplaintCategory category = new ComplaintCategory();
+                category.setName(catName);
+                categoryRepository.save(category);
+            }
+            log.info("Seeded {} complaint categories", categories.size());
+        }
+    }
+
+    /**
+     * DEVELOPMENT TEST USERS ONLY.
+     * These accounts are for testing role-based access during development.
+     * They must be removed or disabled before production deployment.
+     */
+    private void seedTestUsers() {
+        createTestUserIfNotExists(
+                "Test Citizen", "citizen@test.com", "9000000001",
+                "Password@123", RoleName.CITIZEN);
+
+        createTestUserIfNotExists(
+                "Test Officer", "officer@test.com", "9000000002",
+                "Password@123", RoleName.OFFICER);
+
+        createTestUserIfNotExists(
+                "Test Admin", "admin@test.com", "9000000003",
+                "Password@123", RoleName.ADMIN);
+    }
+
+    private void createTestUserIfNotExists(String fullName, String email, String mobile,
+                                           String rawPassword, RoleName roleName) {
+        if (!userRepository.existsByEmail(email)) {
+            Role role = roleRepository.findByName(roleName)
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+
+            User user = new User();
+            user.setFullName(fullName);
+            user.setEmail(email);
+            user.setMobileNumber(mobile);
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setRole(role);
+            user.setEnabled(true);
+
+            userRepository.save(user);
+            log.info("[DEV] Seeded test user: {} ({})", email, roleName);
+        }
+    }
+}

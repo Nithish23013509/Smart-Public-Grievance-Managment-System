@@ -1,0 +1,106 @@
+import React, { useContext } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building } from 'lucide-react';
+
+const DashboardLayout = () => {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const renderSidebarLinks = () => {
+    if (!user) return null;
+    if (user.role === 'CITIZEN') return (
+      <>
+        <NavLink to="/citizen/dashboard" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/citizen/complaints/new" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><PlusCircle size={18} /> Submit Complaint</NavLink>
+        <NavLink to="/citizen/complaints" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> My Complaints</NavLink>
+        <NavLink to="/citizen/notifications" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
+        <NavLink to="/citizen/profile" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
+      </>
+    );
+    if (user.role === 'OFFICER') return (
+      <>
+        <NavLink to="/officer/dashboard" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/officer/notifications" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
+        <NavLink to="/officer/profile" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
+      </>
+    );
+    if (user.role === 'ADMIN') return (
+      <>
+        <NavLink to="/admin/dashboard" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/admin/complaints" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> All Complaints</NavLink>
+        <NavLink to="/admin/users" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Users size={18} /> Users & Officers</NavLink>
+        <NavLink to="/admin/departments" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Building size={18} /> Departments</NavLink>
+        <NavLink to="/admin/notifications" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
+        <NavLink to="/admin/profile" className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
+      </>
+    );
+  };
+
+  return (
+    <div className="dashboard-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <div className="sidebar-logo-icon">🏛️</div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2 }}>SmartGrievance</div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Government Portal</div>
+          </div>
+        </div>
+
+        {/* Gold accent line */}
+        <div style={{ height: '3px', background: 'var(--color-secondary)' }}></div>
+
+        <nav className="sidebar-nav">
+          {renderSidebarLinks()}
+        </nav>
+
+        <div style={{ padding: '1rem 0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ padding: '0.75rem 1rem', marginBottom: '0.75rem', background: 'rgba(255,255,255,0.06)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff' }}>{user?.fullName}</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{user?.role} Portal</div>
+          </div>
+          <button onClick={logout} className="btn" style={{
+            width: '100%', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)',
+            border: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '0.5rem', justifyContent: 'center',
+            fontSize: '0.85rem'
+          }}>
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        {/* Flag stripe on top */}
+        <div className="flag-stripe" style={{ height: '4px' }}>
+          <div className="band-red"></div><div className="band-gold"></div><div className="band-red"></div>
+        </div>
+
+        <header className="top-header">
+          <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.9rem' }}>
+            {user?.role === 'CITIZEN' ? 'Citizen' : user?.role === 'OFFICER' ? 'Officer' : 'Administrator'} Portal
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user?.fullName}</div>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>{user?.email}</div>
+            </div>
+            <div style={{
+              width: '38px', height: '38px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
+              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 700, fontSize: '0.9rem'
+            }}>
+              {user?.fullName?.charAt(0) || 'U'}
+            </div>
+          </div>
+        </header>
+        <div className="content-area">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default DashboardLayout;
