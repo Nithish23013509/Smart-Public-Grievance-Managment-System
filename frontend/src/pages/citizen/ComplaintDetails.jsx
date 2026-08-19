@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import complaintService from '../../services/complaintService';
+import { SERVER_BASE_URL } from '../../services/api';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
@@ -91,10 +92,11 @@ const ComplaintDetails = () => {
             {complaint.imageUrl && (
               <div style={{ marginTop: '1.5rem' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.04em', marginBottom: '0.5rem' }}>Attachment</div>
-                <img src={`http://localhost:8080${complaint.imageUrl}`} alt="Complaint proof" style={{ maxWidth: '100%', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }} />
+                <img src={`${SERVER_BASE_URL}${complaint.imageUrl}`} alt="Complaint proof" style={{ maxWidth: '100%', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }} />
               </div>
             )}
           </div>
+
 
           {/* Timeline */}
           <div className="card">
