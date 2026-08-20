@@ -243,6 +243,7 @@ tbody tr:last-child td { border-bottom: none; }
   
   /* Grids */
   .grid-cols-2, .grid-cols-3, .grid-cols-4 { grid-template-columns: 1fr; }
+  .grid-cols-2 > *, .grid-cols-3 > *, .grid-cols-4 > * { grid-column: span 1 !important; }
   
   /* Content areas */
   .top-header { padding: 0 1rem; }
