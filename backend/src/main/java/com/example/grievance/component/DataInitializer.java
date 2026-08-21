@@ -63,19 +63,32 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedDepartments() {
         if (departmentRepository.count() == 0) {
-            List<String> depts = List.of(
-                    "Municipal Administration and Water Supply",
-                    "Revenue and Disaster Management",
-                    "Highways",
-                    "Health and Family Welfare",
-                    "School Education"
-            );
-            for (String deptName : depts) {
+            String[][] deptData = {
+                {"Municipal Administration and Water Supply", "Municipal services, water supply, sanitation and waste management"},
+                {"Rural Development and Panchayat Raj", "Rural development and Panchayat services"},
+                {"Highways and Minor Ports", "Highways and road infrastructure"},
+                {"Public Works Department", "Government buildings and public infrastructure"},
+                {"Revenue and Disaster Management", "Revenue, land records and disaster management services"},
+                {"Health and Family Welfare", "Government healthcare services"},
+                {"School Education", "Government school education services"},
+                {"Higher Education", "Higher education services"},
+                {"Energy", "Electricity and energy services"},
+                {"Transport", "Public transportation services"},
+                {"Agriculture and Farmers Welfare", "Agriculture and farmer services"},
+                {"Environment, Climate Change and Forests", "Environmental and forest-related services"},
+                {"Social Welfare and Women Empowerment", "Social welfare services"},
+                {"Animal Husbandry and Fisheries", "Animal husbandry and fisheries services"},
+                {"Labour Welfare and Skill Development", "Labour and employment-related services"}
+            };
+            
+            for (String[] data : deptData) {
                 Department dept = new Department();
-                dept.setName(deptName);
+                dept.setName(data[0]);
+                dept.setDescription(data[1]);
+                dept.setActive(true);
                 departmentRepository.save(dept);
             }
-            log.info("Seeded {} departments", depts.size());
+            log.info("Seeded {} departments", deptData.length);
         }
     }
 
