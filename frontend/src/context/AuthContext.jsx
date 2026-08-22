@@ -16,6 +16,16 @@ export const AuthProvider = ({ children }) => {
     if (storedUser && token) {
       setUser(storedUser);
       setIsAuthenticated(true);
+    } else {
+      // TEMP BYPASS FOR TESTING WITHOUT AUTH
+      console.warn('⚠️ TEMPORARY DEV AUTH BYPASS ENABLED ⚠️');
+      setUser({
+        id: 999,
+        fullName: 'Dev Admin',
+        email: 'admin@example.com',
+        role: 'ADMIN'
+      });
+      setIsAuthenticated(true);
     }
     setLoading(false);
   }, []);

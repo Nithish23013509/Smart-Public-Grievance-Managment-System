@@ -18,6 +18,8 @@ import ComplaintDetails from '../pages/citizen/ComplaintDetails';
 // Officer Pages
 import OfficerDashboard from '../pages/officer/OfficerDashboard';
 import OfficerComplaintDetails from '../pages/officer/OfficerComplaintDetails';
+import AiReviewQueue from '../pages/officer/AiReviewQueue';
+import AiReviewDetail from '../pages/officer/AiReviewDetail';
 
 // Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -25,6 +27,7 @@ import AdminComplaints from '../pages/admin/AdminComplaints';
 import AdminComplaintDetails from '../pages/admin/AdminComplaintDetails';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminDepartments from '../pages/admin/AdminDepartments';
+import AiAnalyticsDashboard from '../pages/admin/AiAnalyticsDashboard';
 
 // Shared Pages
 import Notifications from '../pages/Notifications';
@@ -58,6 +61,8 @@ const AppRoutes = () => {
             <Route path="/officer/dashboard" element={<OfficerDashboard />} />
             <Route path="/officer/complaints" element={<Navigate to="/officer/dashboard" replace />} />
             <Route path="/officer/complaints/:id" element={<OfficerComplaintDetails />} />
+            <Route path="/officer/ai-review" element={<AiReviewQueue />} />
+            <Route path="/officer/ai-review/:id" element={<AiReviewDetail />} />
             <Route path="/officer/notifications" element={<Notifications />} />
             <Route path="/officer/profile" element={<Profile />} />
           </Route>
@@ -71,6 +76,9 @@ const AppRoutes = () => {
             <Route path="/admin/complaints/:id" element={<AdminComplaintDetails />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/departments" element={<AdminDepartments />} />
+            <Route path="/admin/ai-analytics" element={<AiAnalyticsDashboard />} />
+            <Route path="/admin/ai-review" element={<AiReviewQueue />} />
+            <Route path="/admin/ai-review/:id" element={<AiReviewDetail />} />
             <Route path="/admin/notifications" element={<Notifications />} />
             <Route path="/admin/profile" element={<Profile />} />
           </Route>

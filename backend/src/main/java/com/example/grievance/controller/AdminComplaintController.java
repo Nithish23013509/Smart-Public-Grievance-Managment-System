@@ -46,4 +46,45 @@ public class AdminComplaintController {
         ComplaintResponse response = complaintService.assignComplaint(id, request, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Complaint assigned successfully", response));
     }
+
+    /**
+     * Get complaints that require AI review (paginated).
+     */
+    @GetMapping("/ai-review-queue")
+    public ResponseEntity<ApiResponse<Page<ComplaintResponse>>> getComplaintsForAiReview(
+            @RequestParam(required = false) com.example.grievance.entity.enums.ComplaintStatus status,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Page<ComplaintResponse> complaints = complaintService.getComplaintsForAiReview(status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(complaints));
+    }
+
+    /**
+     * Approve or Override AI recommendation.
+     */
+    @PostMapping("/{id}/ai-review")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> reviewAiRecommendation(
+            @PathVariable Long id,
+            @Valid @RequestBody com.example.grievance.dto.AiReviewOverrideRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        ComplaintResponse response = complaintService.reviewAiRecommendation(id, request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("AI Recommendation reviewed successfully", response));
+    }
+
+    /**
+     * Get AI Recommendation Analytics.
+     */
+    @GetMapping("/ai/analytics")
+    public ResponseEntity<ApiResponse<com.example.grievance.dto.AiAnalyticsResponse>> getAiAnalytics() {
+        return ResponseEntity.ok(ApiResponse.success(complaintService.getAiAnalytics()));
+    }
+
+    /**
+     * Get AI Feedback Data for ML retraining.
+     */
+    @GetMapping("/ai/feedback-data")
+    public ResponseEntity<ApiResponse<java.util.List<com.example.grievance.dto.AiFeedbackData>>> getAiFeedbackData() {
+        return ResponseEntity.ok(ApiResponse.success(complaintService.getAiFeedbackData()));
+    }
 }

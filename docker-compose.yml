@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - AI_SERVICE_URL=http://ml-service:5000
+    depends_on:
+      - ml-service
+    networks:
+      - grievance-network
+
+  ml-service:
+    build:
+      context: ./ai-department-recommendation
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - grievance-network
+
+networks:
+  grievance-network:
+    driver: bridge

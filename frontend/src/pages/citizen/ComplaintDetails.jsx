@@ -3,9 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import complaintService from '../../services/complaintService';
 import { SERVER_BASE_URL } from '../../services/api';
 import StatusBadge from '../../components/common/StatusBadge';
+import AiDecisionBadge from '../../components/common/AiDecisionBadge';
+import ConfidenceMeter from '../../components/common/ConfidenceMeter';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
-import { MapPin, Calendar, User, Building, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
+import { MapPin, Calendar, User, Building, FileText, CheckCircle, ArrowLeft, Sparkles } from 'lucide-react';
 
 const ComplaintDetails = () => {
   const { id } = useParams();
@@ -57,6 +59,8 @@ const ComplaintDetails = () => {
     </div>
   );
 
+  const isReviewed = complaint.aiReviewAccepted !== null && complaint.aiReviewAccepted !== undefined;
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       {/* Header */}
@@ -97,7 +101,6 @@ const ComplaintDetails = () => {
             )}
           </div>
 
-
           {/* Timeline */}
           <div className="card">
             <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary-dark)' }}>
@@ -133,6 +136,35 @@ const ComplaintDetails = () => {
             <DetailRow icon={<FileText size={13} />} label="Category" value={complaint.categoryName} />
             <DetailRow icon={<User size={13} />} label="Assigned Officer" value={complaint.assignedOfficerName || 'Not assigned yet'} />
           </div>
+
+          {/* AI Recommendation Card */}
+          {complaint.aiDecision && (
+            <div className="card" style={{ borderTop: '3px solid var(--color-info)' }}>
+              <h2 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-info)' }}>
+                <Sparkles size={16} /> AI Recommendation
+              </h2>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <AiDecisionBadge decision={complaint.aiDecision} />
+              </div>
+              <ConfidenceMeter confidence={complaint.aiConfidence} />
+              {isReviewed && (
+                <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: 'var(--radius-md)', border: '1px solid #bbf7d0' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#065f46', marginBottom: '0.25rem' }}>
+                    {complaint.aiReviewAccepted ? '✓ AI Recommendation Accepted' : '↻ Manually Overridden'}
+                  </div>
+                  {complaint.aiOverrideReason && (
+                    <div style={{ fontSize: '0.8rem', color: '#374151' }}>Reason: {complaint.aiOverrideReason}</div>
+                  )}
+                  {complaint.aiReviewerName && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>
+                      By: {complaint.aiReviewerName}
+                      {complaint.aiReviewedAt && ` on ${new Date(complaint.aiReviewedAt).toLocaleDateString()}`}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="card">
             <h2 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--color-primary-dark)' }}>Location</h2>

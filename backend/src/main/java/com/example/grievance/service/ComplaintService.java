@@ -7,6 +7,8 @@ import com.example.grievance.entity.enums.RoleName;
 import com.example.grievance.exception.ResourceNotFoundException;
 import com.example.grievance.repository.*;
 import com.example.grievance.security.CustomUserDetails;
+import com.example.grievance.ai.AiRecommendationService;
+import com.example.grievance.ai.AiRecommendationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,6 +39,9 @@ public class ComplaintService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final NotificationService notificationService;
+    private final AiRecommendationService aiRecommendationService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    private final com.example.grievance.config.AiRoutingProperties routingProperties;
 
     // ======== CITIZEN OPERATIONS ========
 
@@ -45,11 +50,104 @@ public class ComplaintService {
         User citizen = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        ComplaintCategory category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+        ComplaintCategory category = null;
+        Department department = null;
+        Double aiConfidence = null;
+        String aiDecision = null;
+        String aiAlternativesJson = null;
 
-        Department department = departmentRepository.findById(request.getDepartmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.getDepartmentId()));
+        try {
+            log.info("Requesting AI recommendation for complaint: {}", request.getTitle());
+            AiRecommendationResponse aiResponse = aiRecommendationService.recommend(request.getDescription());
+            
+            if (aiResponse == null) {
+                // Circuit Breaker triggered or all retries failed
+                log.warn("AI recommendation fallback triggered - returning LOW_CONFIDENCE");
+                aiDecision = "LOW_CONFIDENCE";
+                aiConfidence = 0.0;
+            } else {
+                aiConfidence = aiResponse.getConfidence();
+                
+                // Serialize alternatives
+                if (aiResponse.getAlternatives() != null) {
+                    aiAlternativesJson = objectMapper.writeValueAsString(aiResponse.getAlternatives());
+                }
+
+                // Confidence-Based Routing Logic
+                if (aiConfidence >= routingProperties.getThreshold().getAuto()) {
+                    aiDecision = "AUTO_RECOMMENDED";
+                    
+                    if (aiResponse.getCategory() != null) {
+                        category = categoryRepository.findByName(aiResponse.getCategory()).orElseGet(() -> {
+                            ComplaintCategory newCat = new ComplaintCategory();
+                            newCat.setName(aiResponse.getCategory());
+                            newCat.setDescription("Auto-generated from AI");
+                            return categoryRepository.save(newCat);
+                        });
+                    }
+                    if (aiResponse.getDepartment() != null) {
+                        department = departmentRepository.findByName(aiResponse.getDepartment()).orElseGet(() -> {
+                            Department newDept = new Department();
+                            newDept.setName(aiResponse.getDepartment());
+                            newDept.setDescription("Auto-generated from AI");
+                            newDept.setCode(aiResponse.getDepartment().substring(0, Math.min(aiResponse.getDepartment().length(), 10)).toUpperCase().replaceAll("\\s+", "_"));
+                            return departmentRepository.save(newDept);
+                        });
+                    }
+                } else {
+                    if (aiConfidence >= routingProperties.getThreshold().getReview()) {
+                        aiDecision = "REVIEW_REQUIRED";
+                    } else {
+                        aiDecision = "LOW_CONFIDENCE";
+                    }
+                    
+                    log.info("Complaint routed for review. Confidence {} < {}", aiConfidence, routingProperties.getThreshold().getAuto());
+                    
+                    // Route to the default review department instead of the predicted one
+                    department = departmentRepository.findByName(routingProperties.getDefaultReviewDepartment()).orElseGet(() -> {
+                        Department newDept = new Department();
+                        newDept.setName(routingProperties.getDefaultReviewDepartment());
+                        newDept.setDescription("Default review department for uncertain complaints");
+                        newDept.setCode("REVIEW_BRD");
+                        return departmentRepository.save(newDept);
+                    });
+                    
+                    // We still try to save the category if it was somewhat confident, or default to General
+                    if (aiResponse.getCategory() != null && aiConfidence >= routingProperties.getThreshold().getReview()) {
+                        category = categoryRepository.findByName(aiResponse.getCategory()).orElseGet(() -> {
+                            ComplaintCategory newCat = new ComplaintCategory();
+                            newCat.setName(aiResponse.getCategory());
+                            newCat.setDescription("Auto-generated from AI");
+                            return categoryRepository.save(newCat);
+                        });
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("AI Service failed, falling back to manual or default categories", e);
+            aiDecision = "LOW_CONFIDENCE";
+            aiConfidence = 0.0;
+        }
+
+        // Fallback if AI fails completely (or if both returned null)
+        if (category == null) {
+            category = categoryRepository.findByName("General").orElseGet(() -> {
+                ComplaintCategory newCat = new ComplaintCategory();
+                newCat.setName("General");
+                newCat.setDescription("Default fallback category");
+                return categoryRepository.save(newCat);
+            });
+        }
+
+        if (department == null) {
+            department = departmentRepository.findByName("General Administration").orElseGet(() -> {
+                Department newDept = new Department();
+                newDept.setName("General Administration");
+                newDept.setDescription("Default fallback department");
+                newDept.setCode("GEN_ADMIN");
+                return departmentRepository.save(newDept);
+            });
+        }
 
         District district = districtRepository.findById(request.getDistrictId())
                 .orElseThrow(() -> new ResourceNotFoundException("District not found with id: " + request.getDistrictId()));
@@ -60,6 +158,9 @@ public class ComplaintService {
         complaint.setDescription(request.getDescription());
         complaint.setCategory(category);
         complaint.setDepartment(department);
+        complaint.setAiConfidence(aiConfidence);
+        complaint.setAiDecision(aiDecision);
+        complaint.setAiAlternativesJson(aiAlternativesJson);
         complaint.setCitizen(citizen);
         complaint.setDistrict(district);
         complaint.setLocationAddress(request.getLocationAddress());
@@ -300,6 +401,115 @@ public class ComplaintService {
         return mapToResponse(complaint);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ComplaintResponse> getComplaintsForAiReview(ComplaintStatus status, Pageable pageable) {
+        java.util.List<String> reviewDecisions = java.util.Arrays.asList("REVIEW_REQUIRED", "LOW_CONFIDENCE");
+        if (status != null) {
+            return complaintRepository.findByAiDecisionInAndStatus(reviewDecisions, status, pageable)
+                    .map(this::mapToResponse);
+        }
+        return complaintRepository.findByAiDecisionIn(reviewDecisions, pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Transactional
+    public ComplaintResponse reviewAiRecommendation(Long id, AiReviewOverrideRequest request, CustomUserDetails currentUser) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + id));
+
+        User admin = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+
+        if (!request.getAcceptAiRecommendation()) {
+            if (request.getCategoryId() == null || request.getDepartmentId() == null) {
+                throw new IllegalArgumentException("Category and Department must be provided when overriding AI recommendation");
+            }
+            if (request.getOverrideReason() == null || request.getOverrideReason().trim().isEmpty()) {
+                throw new IllegalArgumentException("Override reason must be provided when rejecting AI recommendation");
+            }
+
+            ComplaintCategory newCategory = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+            Department newDepartment = departmentRepository.findById(request.getDepartmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.getDepartmentId()));
+
+            complaint.setCategory(newCategory);
+            complaint.setDepartment(newDepartment);
+            complaint.setAiOverrideReason(request.getOverrideReason());
+        }
+
+        complaint.setAiReviewAccepted(request.getAcceptAiRecommendation());
+        complaint.setAiReviewer(admin);
+        complaint.setAiReviewedAt(LocalDateTime.now());
+        
+        // Mark AI decision as reviewed (append it so it drops from the queue, or keep the queue logic based on aiReviewedAt == null)
+        // Since the prompt asks to list "REVIEW_REQUIRED or LOW_CONFIDENCE", to hide reviewed ones from the queue, 
+        // we could just change the AI decision or rely on `aiReviewedAt IS NULL`. 
+        // A better approach is to append "_REVIEWED" to aiDecision.
+        if (complaint.getAiDecision() != null && !complaint.getAiDecision().endsWith("_REVIEWED")) {
+            complaint.setAiDecision(complaint.getAiDecision() + "_REVIEWED");
+        }
+
+        complaintRepository.save(complaint);
+        
+        log.info("AI Recommendation reviewed for complaint {} by {}. Accepted: {}", 
+            complaint.getComplaintNumber(), admin.getEmail(), request.getAcceptAiRecommendation());
+            
+        return mapToResponse(complaint);
+    }
+
+    @Transactional(readOnly = true)
+    public AiAnalyticsResponse getAiAnalytics() {
+        long total = complaintRepository.countTotalAiRoutedComplaints();
+        long auto = complaintRepository.countByAiDecision("AUTO_RECOMMENDED", "AUTO_RECOMMENDED_REVIEWED");
+        long review = complaintRepository.countByAiDecision("REVIEW_REQUIRED", "REVIEW_REQUIRED_REVIEWED");
+        long low = complaintRepository.countByAiDecision("LOW_CONFIDENCE", "LOW_CONFIDENCE_REVIEWED");
+        long accepted = complaintRepository.countByAiReviewAccepted(true);
+        long overridden = complaintRepository.countByAiReviewAccepted(false);
+        Double avgConfidence = complaintRepository.getAverageAiConfidence();
+
+        java.util.Map<String, Long> deptMap = complaintRepository.getDepartmentWiseAiDistribution().stream()
+                .collect(Collectors.toMap(
+                        obj -> (String) obj[0],
+                        obj -> (Long) obj[1]
+                ));
+
+        java.util.Map<String, Long> catMap = complaintRepository.getCategoryWiseAiDistribution().stream()
+                .collect(Collectors.toMap(
+                        obj -> (String) obj[0],
+                        obj -> (Long) obj[1]
+                ));
+
+        return AiAnalyticsResponse.builder()
+                .totalAiRoutedComplaints(total)
+                .autoRecommendedCount(auto)
+                .reviewRequiredCount(review)
+                .lowConfidenceCount(low)
+                .manualOverridesCount(overridden)
+                .aiAcceptedCount(accepted)
+                .averageConfidence(avgConfidence != null ? avgConfidence : 0.0)
+                .departmentWiseDistribution(deptMap)
+                .categoryWiseDistribution(catMap)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AiFeedbackData> getAiFeedbackData() {
+        return complaintRepository.findByAiDecisionIsNotNull().stream()
+                .map(c -> AiFeedbackData.builder()
+                        .complaintId(c.getId())
+                        .description(c.getDescription())
+                        .aiDecision(c.getAiDecision())
+                        .aiConfidence(c.getAiConfidence())
+                        .aiAlternativesJson(c.getAiAlternativesJson())
+                        .aiReviewAccepted(c.getAiReviewAccepted())
+                        .aiOverrideReason(c.getAiOverrideReason())
+                        .finalCategory(c.getCategory().getName())
+                        .finalDepartment(c.getDepartment().getName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     // ======== HELPERS ========
 
     private String generateComplaintNumber() {
@@ -353,6 +563,13 @@ public class ComplaintService {
                 .latitude(c.getLatitude())
                 .longitude(c.getLongitude())
                 .imageUrl(c.getImageUrl())
+                .aiConfidence(c.getAiConfidence())
+                .aiDecision(c.getAiDecision())
+                .aiAlternativesJson(c.getAiAlternativesJson())
+                .aiReviewAccepted(c.getAiReviewAccepted())
+                .aiOverrideReason(c.getAiOverrideReason())
+                .aiReviewerName(c.getAiReviewer() != null ? c.getAiReviewer().getFullName() : null)
+                .aiReviewedAt(c.getAiReviewedAt())
                 .status(c.getStatus().name())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())

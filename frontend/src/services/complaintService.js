@@ -72,6 +72,23 @@ const complaintService = {
       officerId
     });
     return response.data;
+  },
+
+  // AI Review Queue (Admin/Officer)
+  getAiReviewQueue: async (page = 0, size = 10) => {
+    const response = await api.get(`/admin/complaints/ai-review-queue?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  submitAiReview: async (id, data) => {
+    const response = await api.post(`/admin/complaints/${id}/ai-review`, data);
+    return response.data;
+  },
+
+  // AI Analytics (Admin)
+  getAiAnalytics: async () => {
+    const response = await api.get('/admin/complaints/ai/analytics');
+    return response.data;
   }
 };
 

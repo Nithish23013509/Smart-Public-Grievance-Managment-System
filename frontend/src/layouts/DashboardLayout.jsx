@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building, Menu, X } from 'lucide-react';
+import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building, Menu, X, Sparkles, BarChart3 } from 'lucide-react';
 
 const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
@@ -24,6 +24,7 @@ const DashboardLayout = () => {
     if (user.role === 'OFFICER') return (
       <>
         <NavLink to="/officer/dashboard" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
+        <NavLink to="/officer/ai-review" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Sparkles size={18} /> AI Review Queue</NavLink>
         <NavLink to="/officer/notifications" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>
         <NavLink to="/officer/profile" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><User size={18} /> Profile</NavLink>
       </>
@@ -32,6 +33,8 @@ const DashboardLayout = () => {
       <>
         <NavLink to="/admin/dashboard" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Home size={18} /> Dashboard</NavLink>
         <NavLink to="/admin/complaints" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><FileText size={18} /> All Complaints</NavLink>
+        <NavLink to="/admin/ai-analytics" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><BarChart3 size={18} /> AI Analytics</NavLink>
+        <NavLink to="/admin/ai-review" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Sparkles size={18} /> AI Review Queue</NavLink>
         <NavLink to="/admin/users" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Users size={18} /> Users & Officers</NavLink>
         <NavLink to="/admin/departments" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Building size={18} /> Departments</NavLink>
         <NavLink to="/admin/notifications" onClick={closeSidebar} className={({isActive}) => isActive ? "sidebar-link active" : "sidebar-link"}><Bell size={18} /> Notifications</NavLink>

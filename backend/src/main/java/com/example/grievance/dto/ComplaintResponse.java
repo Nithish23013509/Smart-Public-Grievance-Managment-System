@@ -50,6 +50,15 @@ public class ComplaintResponse {
     // Image
     private String imageUrl;
 
+    // AI
+    private Double aiConfidence;
+    private String aiDecision;
+    private String aiAlternativesJson;
+    private Boolean aiReviewAccepted;
+    private String aiOverrideReason;
+    private String aiReviewerName;
+    private LocalDateTime aiReviewedAt;
+
     // Status
     private String status;
 

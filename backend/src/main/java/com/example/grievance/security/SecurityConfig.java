@@ -44,11 +44,13 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/public").permitAll()
+                        .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         // Role-based endpoints
                         .requestMatchers("/api/citizen/**").hasRole("CITIZEN")
                         .requestMatchers("/api/officer/**").hasRole("OFFICER")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )

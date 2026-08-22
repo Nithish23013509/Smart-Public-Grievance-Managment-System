@@ -16,10 +16,8 @@ public class CreateComplaintRequest {
     @Size(min = 10, max = 5000, message = "Description must be between 10 and 5000 characters")
     private String description;
 
-    @NotNull(message = "Category is required")
     private Long categoryId;
 
-    @NotNull(message = "Department is required")
     private Long departmentId;
 
     @NotNull(message = "District is required")

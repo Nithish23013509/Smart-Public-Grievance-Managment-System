@@ -65,6 +65,22 @@ public class Complaint {
     private Double longitude;
     private String imageUrl;
 
+    private Double aiConfidence;
+    private String aiDecision;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiAlternativesJson;
+
+    // AI Review / Override Fields
+    private Boolean aiReviewAccepted;
+    private String aiOverrideReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ai_reviewer_id")
+    private User aiReviewer;
+
+    private LocalDateTime aiReviewedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ComplaintStatus status = ComplaintStatus.SUBMITTED;
