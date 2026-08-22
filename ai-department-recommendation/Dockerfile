@@ -5,14 +5,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# The ML models were saved to /models so we must copy them
-COPY models/ ./models/
+# Models are inside the ml/ folder now
 COPY ml/ ./ml/
 COPY data/ ./data/
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 5000
-
-CMD ["python", "ml/app.py"]
+# Run with Gunicorn, binding to dynamic $PORT (defaults to 5000 if not set)
+CMD gunicorn --bind 0.0.0.0:${PORT:-5000} ml.app:app
