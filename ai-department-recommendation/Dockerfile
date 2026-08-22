@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Models are inside the ml/ folder now
 COPY ml/ ./ml/
-COPY data/ ./data/
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
