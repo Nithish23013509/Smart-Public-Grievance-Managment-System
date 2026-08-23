@@ -7,6 +7,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { ArrowLeft, Sparkles, CheckCircle, XCircle, FileText, MapPin } from 'lucide-react';
+import departmentService from '../../services/departmentService';
 
 const AiReviewDetail = () => {
   const { id } = useParams();
@@ -17,19 +18,31 @@ const AiReviewDetail = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Reference data state
+  const [departments, setDepartments] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   // Review form state
   const [acceptAi, setAcceptAi] = useState(true);
   const [overrideReason, setOverrideReason] = useState('');
+  const [overrideCategoryId, setOverrideCategoryId] = useState('');
+  const [overrideDepartmentId, setOverrideDepartmentId] = useState('');
 
   useEffect(() => {
-    const fetchComplaint = async () => {
+    const fetchData = async () => {
       try {
-        const res = await complaintService.getComplaintById(id);
-        if (res.success) setComplaint(res.data);
-      } catch (err) { setError('Failed to load complaint.'); }
+        const [compRes, deptRes, catRes] = await Promise.all([
+          complaintService.getComplaintById(id),
+          departmentService.getDepartments(),
+          departmentService.getCategories()
+        ]);
+        if (compRes.success) setComplaint(compRes.data);
+        if (deptRes.success) setDepartments(deptRes.data);
+        if (catRes.success) setCategories(catRes.data);
+      } catch (err) { setError('Failed to load complaint data.'); }
       finally { setLoading(false); }
     };
-    fetchComplaint();
+    fetchData();
   }, [id]);
 
   const handleSubmitReview = async (e) => {
@@ -38,11 +51,17 @@ const AiReviewDetail = () => {
       setError('Please provide a reason for overriding the AI recommendation.');
       return;
     }
+    if (!acceptAi && (!overrideCategoryId || !overrideDepartmentId)) {
+      setError('Please select both a category and a department to override.');
+      return;
+    }
     setSubmitting(true); setError(''); setSuccessMsg('');
     try {
       const payload = {
         acceptAiRecommendation: acceptAi,
-        overrideReason: acceptAi ? null : overrideReason
+        overrideReason: acceptAi ? null : overrideReason,
+        categoryId: acceptAi ? null : overrideCategoryId,
+        departmentId: acceptAi ? null : overrideDepartmentId
       };
       const res = await complaintService.submitAiReview(id, payload);
       if (res.success) {
@@ -123,11 +142,33 @@ const AiReviewDetail = () => {
                 </div>
 
                 {!acceptAi && (
-                  <div className="form-group">
-                    <label className="form-label">Override Reason *</label>
-                    <textarea className="form-control" rows={3} placeholder="Explain why the AI recommendation is incorrect..."
-                      value={overrideReason} onChange={e => setOverrideReason(e.target.value)} required />
-                  </div>
+                  <>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="form-group">
+                        <label className="form-label">Select Correct Category *</label>
+                        <select className="form-control" value={overrideCategoryId} onChange={e => setOverrideCategoryId(e.target.value)} required>
+                          <option value="">-- Select Category --</option>
+                          {categories.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Select Correct Department *</label>
+                        <select className="form-control" value={overrideDepartmentId} onChange={e => setOverrideDepartmentId(e.target.value)} required>
+                          <option value="">-- Select Department --</option>
+                          {departments.map(d => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Override Reason *</label>
+                      <textarea className="form-control" rows={3} placeholder="Explain why the AI recommendation is incorrect..."
+                        value={overrideReason} onChange={e => setOverrideReason(e.target.value)} required />
+                    </div>
+                  </>
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>

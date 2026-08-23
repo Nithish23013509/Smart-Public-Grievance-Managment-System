@@ -1,10 +1,7 @@
-// MOCK DATA FOR PHASE 1 - Real endpoints to be added in future steps
-const MOCK_DISTRICTS = [
-  { id: 1, name: 'Chennai', code: 'CHN' },
-  { id: 2, name: 'Coimbatore', code: 'CBE' },
-  { id: 3, name: 'Madurai', code: 'MDU' }
-];
+import api from './api';
 
+// Keeping these mocked for now since they are secondary dropdowns.
+// Real apps would have similar reference endpoints for these.
 const MOCK_DIVISIONS = [
   { id: 1, districtId: 1, name: 'North Chennai' },
   { id: 2, districtId: 1, name: 'South Chennai' },
@@ -23,24 +20,26 @@ const MOCK_LOCAL_BODIES = [
 
 const locationService = {
   getDistricts: async () => {
-    // TODO: Connect to backend GET /districts
-    return { data: MOCK_DISTRICTS, success: true };
+    try {
+      const response = await api.get('/reference/districts');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching districts:', error);
+      return { data: [], success: false };
+    }
   },
   
   getRevenueDivisions: async (districtId) => {
-    // TODO: Connect to backend GET /districts/{id}/revenue-divisions
     const filtered = MOCK_DIVISIONS.filter(d => d.districtId === Number(districtId));
     return { data: filtered, success: true };
   },
   
   getTaluks: async (revenueDivisionId) => {
-    // TODO: Connect to backend GET /revenue-divisions/{id}/taluks
     const filtered = MOCK_TALUKS.filter(t => t.revenueDivisionId === Number(revenueDivisionId));
     return { data: filtered, success: true };
   },
   
   getLocalBodies: async (districtId) => {
-    // TODO: Connect to backend GET /districts/{id}/local-bodies
     const filtered = MOCK_LOCAL_BODIES.filter(l => l.districtId === Number(districtId));
     return { data: filtered, success: true };
   }

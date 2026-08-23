@@ -1,19 +1,18 @@
 import api from './api';
 
-// Mocking User Management for Admin in Phase 1
 const userService = {
   getOfficersByDepartment: async (departmentId) => {
-    // TODO: Implement backend API GET /admin/officers?departmentId={id}
-    // Hardcoding test officer for testing Assignment functionality
-    return {
-      success: true,
-      data: [
-        { id: 2, fullName: 'Test Officer', email: 'officer@test.com', role: 'OFFICER' }
-      ]
-    };
+    try {
+      const response = await api.get(`/admin/officers?departmentId=${departmentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching officers:', error);
+      return { data: [], success: false };
+    }
   },
   
   getAllUsers: async () => {
+    // Left as mock for now unless there's a real endpoint
     return {
       success: true,
       data: [
