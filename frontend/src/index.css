@@ -292,6 +292,28 @@ tbody tr:last-child td { border-bottom: none; }
   .sidebar-overlay { display: none !important; }
 }
 
+.col-span-2 { grid-column: span 2; }
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .col-span-2 { grid-column: span 1 !important; }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 576px) {
   /* Home Header Mobile Fixes */
   header .container { flex-direction: column; text-align: center; gap: 1rem; }

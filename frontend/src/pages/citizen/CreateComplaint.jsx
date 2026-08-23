@@ -165,12 +165,12 @@ const CreateComplaint = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group col-span-2">
               <label className="form-label">Complaint Title *</label>
               <input type="text" name="title" className="form-control" placeholder="Brief summary of the issue"
                 value={formData.title} onChange={handleChange} required minLength={5} maxLength={150} />
             </div>
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group col-span-2">
               <label className="form-label">Description *</label>
               <textarea name="description" className="form-control" placeholder="Describe the problem in detail — the AI uses this to route your complaint..." rows={4}
                 value={formData.description} onChange={handleChange} required minLength={10} />
@@ -189,12 +189,12 @@ const CreateComplaint = () => {
                 {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group col-span-2">
               <label className="form-label">Exact Location Address *</label>
               <input type="text" name="locationAddress" className="form-control" placeholder="Street name, landmark, etc."
                 value={formData.locationAddress} onChange={handleChange} required />
             </div>
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group col-span-2">
               <label className="form-label">Supporting Image (Optional)</label>
               <div style={{
                 border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)',
@@ -203,13 +203,13 @@ const CreateComplaint = () => {
               }}>
                 <Upload size={24} color="var(--color-text-muted)" style={{ margin: '0 auto 0.5rem' }} />
                 <input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleImageChange}
-                  style={{ display: 'block', margin: '0 auto' }} />
+                  style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }} />
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
                   Max 5MB • JPG, PNG, WebP
                 </div>
               </div>
             </div>
-            <div style={{ gridColumn: 'span 2', marginTop: '0.5rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+            <div className="form-actions col-span-2" style={{ marginTop: '0.5rem' }}>
               <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>Cancel</button>
               <button type="submit" className="btn btn-primary" disabled={loading}>
                 {loading ? 'Submitting...' : '📋 Submit Complaint'}
