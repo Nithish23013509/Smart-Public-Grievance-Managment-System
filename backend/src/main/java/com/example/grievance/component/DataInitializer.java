@@ -119,19 +119,22 @@ public class DataInitializer implements CommandLineRunner {
     private void seedTestUsers() {
         createTestUserIfNotExists(
                 "Test Citizen", "citizen@test.com", "9000000001",
-                "Password@123", RoleName.CITIZEN);
+                "Password@123", RoleName.CITIZEN, null);
 
+        // Assign Test Officer to the first department
+        Department firstDept = departmentRepository.findAll().stream().findFirst().orElse(null);
+        
         createTestUserIfNotExists(
                 "Test Officer", "officer@test.com", "9000000002",
-                "Password@123", RoleName.OFFICER);
+                "Password@123", RoleName.OFFICER, firstDept);
 
         createTestUserIfNotExists(
                 "Test Admin", "admin@test.com", "9000000003",
-                "Password@123", RoleName.ADMIN);
+                "Password@123", RoleName.ADMIN, null);
     }
 
     private void createTestUserIfNotExists(String fullName, String email, String mobile,
-                                           String rawPassword, RoleName roleName) {
+                                           String rawPassword, RoleName roleName, Department department) {
         if (!userRepository.existsByEmail(email)) {
             Role role = roleRepository.findByName(roleName)
                     .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
@@ -143,6 +146,7 @@ public class DataInitializer implements CommandLineRunner {
             user.setPassword(passwordEncoder.encode(rawPassword));
             user.setRole(role);
             user.setEnabled(true);
+            user.setDepartment(department);
 
             userRepository.save(user);
             log.info("[DEV] Seeded test user: {} ({})", email, roleName);
