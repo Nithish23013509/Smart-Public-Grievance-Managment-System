@@ -25,17 +25,9 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<List<OfficerDTO>>> getOfficersByDepartment(
             @RequestParam(required = false) Long departmentId) {
         
-        List<User> officers;
-        if (departmentId != null) {
-            officers = userRepository.findByRole_NameAndDepartmentId(RoleName.OFFICER, departmentId);
-        } else {
-            // For now, if no department, return all officers or an empty list. 
-            // Let's just return all officers.
-            // Wait, we need a custom query or just filter in memory for simplicity since it's a small app.
-            officers = userRepository.findAll().stream()
-                    .filter(u -> u.getRole().getName() == RoleName.OFFICER)
-                    .collect(Collectors.toList());
-        }
+        // Return all officers regardless of their current department assignment.
+        // The admin should be able to assign any officer to any complaint/department.
+        List<User> officers = userRepository.findByRole_Name(RoleName.OFFICER);
 
         List<OfficerDTO> officerDTOs = officers.stream()
                 .map(u -> OfficerDTO.builder()

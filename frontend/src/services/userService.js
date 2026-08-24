@@ -6,7 +6,7 @@ const userService = {
       const response = await api.get(`/admin/officers?departmentId=${departmentId}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching officers:', error);
+      console.error('Error fetching officers:', error.response?.status, error.response?.data || error.message);
       return { data: [], success: false };
     }
   },
