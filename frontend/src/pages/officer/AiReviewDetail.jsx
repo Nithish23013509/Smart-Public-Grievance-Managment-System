@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import complaintService from '../../services/complaintService';
 import AiDecisionBadge from '../../components/common/AiDecisionBadge';
@@ -8,6 +8,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { ArrowLeft, Sparkles, CheckCircle, XCircle, FileText, MapPin } from 'lucide-react';
 import departmentService from '../../services/departmentService';
+import { AuthContext } from '../../context/AuthContext';
 
 const AiReviewDetail = () => {
   const { id } = useParams();
@@ -17,6 +18,8 @@ const AiReviewDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const { user } = useContext(AuthContext);
+  const basePath = user?.role === 'ADMIN' ? '/admin' : '/officer';
 
   // Reference data state
   const [departments, setDepartments] = useState([]);
@@ -67,7 +70,7 @@ const AiReviewDetail = () => {
       if (res.success) {
         setSuccessMsg(acceptAi ? 'AI recommendation accepted successfully!' : 'Override submitted successfully!');
         setComplaint(res.data);
-        setTimeout(() => navigate('/officer/ai-review'), 1500);
+        setTimeout(() => navigate(`${basePath}/ai-review`), 1500);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit review.');
@@ -88,7 +91,7 @@ const AiReviewDetail = () => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <button className="btn btn-ghost" onClick={() => navigate('/officer/ai-review')} style={{ marginBottom: '0.75rem', padding: '0.3rem 0' }}>
+      <button className="btn btn-ghost" onClick={() => navigate(`${basePath}/ai-review`)} style={{ marginBottom: '0.75rem', padding: '0.3rem 0' }}>
         <ArrowLeft size={16} /> Back to Queue
       </button>
 
@@ -172,7 +175,7 @@ const AiReviewDetail = () => {
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  <button type="button" className="btn btn-outline" onClick={() => navigate('/officer/ai-review')}>Cancel</button>
+                  <button type="button" className="btn btn-outline" onClick={() => navigate(`${basePath}/ai-review`)}>Cancel</button>
                   <button type="submit" className="btn btn-primary" disabled={submitting}>
                     {submitting ? 'Submitting...' : acceptAi ? '✓ Accept & Route' : '↻ Override & Route'}
                   </button>

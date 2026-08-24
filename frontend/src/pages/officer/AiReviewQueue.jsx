@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import complaintService from '../../services/complaintService';
 import AiDecisionBadge from '../../components/common/AiDecisionBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AuthContext } from '../../context/AuthContext';
 
 const AiReviewQueue = () => {
   const [complaints, setComplaints] = useState([]);
@@ -12,6 +13,8 @@ const AiReviewQueue = () => {
   const [error, setError] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const { user } = useContext(AuthContext);
+  const basePath = user?.role === 'ADMIN' ? '/admin' : '/officer';
 
   const fetchQueue = async (p = 0) => {
     setLoading(true); setError('');
@@ -78,7 +81,7 @@ const AiReviewQueue = () => {
                       <td><AiDecisionBadge decision={c.aiDecision} /></td>
                       <td style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
                       <td>
-                        <Link to={`/officer/ai-review/${c.id}`} className="btn btn-primary" style={{ padding: '0.35rem 0.85rem', fontSize: '0.78rem' }}>
+                        <Link to={`${basePath}/ai-review/${c.id}`} className="btn btn-primary" style={{ padding: '0.35rem 0.85rem', fontSize: '0.78rem' }}>
                           Review
                         </Link>
                       </td>
