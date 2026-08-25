@@ -216,7 +216,7 @@ const CreateComplaint = () => {
         <span><strong>Smart Routing:</strong> Category and department are automatically determined by our AI based on your description. Just describe your issue clearly.</span>
       </div>
 
-      <div className="card" style={{ padding: '2rem' }}>
+      <div className="card">
         <ErrorMessage message={error} />
 
         <form onSubmit={handleSubmit}>
