@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import complaintService from '../../services/complaintService';
 import locationService from '../../services/locationService';
+import speechService from '../../services/speechService';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import AiDecisionBadge from '../../components/common/AiDecisionBadge';
 import ConfidenceMeter from '../../components/common/ConfidenceMeter';
-import { ArrowLeft, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Upload, Sparkles, CheckCircle2, Mic, MicOff, Loader2 } from 'lucide-react';
 
 const CreateComplaint = () => {
   const navigate = useNavigate();
@@ -20,6 +21,10 @@ const CreateComplaint = () => {
   const [divisions, setDivisions] = useState([]);
   const [taluks, setTaluks] = useState([]);
   const [successData, setSuccessData] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     const loadReferenceData = async () => {
@@ -50,6 +55,57 @@ const CreateComplaint = () => {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) { setError('Image size should be less than 5MB'); e.target.value = null; return; }
       setImage(file);
+    }
+  };
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      // Stop recording
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    // Start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        // Stop all tracks to release mic
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size === 0) return;
+
+        setIsTranscribing(true);
+        setError('');
+        try {
+          const result = await speechService.transcribe(audioBlob);
+          if (result.text) {
+            setFormData(prev => ({
+              ...prev,
+              description: prev.description
+                ? prev.description + ' ' + result.text
+                : result.text
+            }));
+          }
+        } catch (err) {
+          setError('Voice transcription failed. Please try again or type manually.');
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      setError('Microphone access denied. Please allow microphone permissions.');
     }
   };
 
@@ -171,9 +227,42 @@ const CreateComplaint = () => {
                 value={formData.title} onChange={handleChange} required minLength={5} maxLength={150} />
             </div>
             <div className="form-group col-span-2">
-              <label className="form-label">Description *</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <label className="form-label" style={{ marginBottom: 0 }}>Description *</label>
+                <button
+                  type="button"
+                  onClick={handleMicClick}
+                  disabled={isTranscribing}
+                  title={isRecording ? 'Stop recording' : 'Record voice'}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                    padding: '0.35rem 0.7rem', borderRadius: 'var(--radius-md)',
+                    border: isRecording ? '1.5px solid var(--color-error)' : '1.5px solid var(--color-border)',
+                    background: isRecording ? 'rgba(197,48,48,0.08)' : '#fafbfc',
+                    color: isRecording ? 'var(--color-error)' : 'var(--color-text-muted)',
+                    cursor: isTranscribing ? 'wait' : 'pointer',
+                    fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit',
+                    transition: 'var(--transition)',
+                    animation: isRecording ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
+                  }}
+                >
+                  {isTranscribing ? (
+                    <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Transcribing...</>
+                  ) : isRecording ? (
+                    <><MicOff size={14} /> Stop</>
+                  ) : (
+                    <><Mic size={14} /> Voice Input</>
+                  )}
+                </button>
+              </div>
               <textarea name="description" className="form-control" placeholder="Describe the problem in detail — the AI uses this to route your complaint..." rows={4}
                 value={formData.description} onChange={handleChange} required minLength={10} />
+              {isRecording && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-error)', display: 'inline-block', animation: 'mic-pulse 1s ease-in-out infinite' }}></span>
+                  Recording... Click "Stop" when done.
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">District *</label>

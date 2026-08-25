@@ -325,3 +325,14 @@ tbody tr:last-child td { border-bottom: none; }
   /* Tables */
   table { display: block; overflow-x: auto; white-space: nowrap; }
 }
+
+/* ========== ANIMATIONS ========== */
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
