@@ -1,56 +1,59 @@
 import joblib
 
-from department_mapping import CATEGORY_DEPARTMENT_MAP
 from recommendation_decision import get_decision
 
-MODEL_PATH = "ml/category_model_calibrated.pkl"
+CATEGORY_MODEL_PATH = "ml/category_model_calibrated.pkl"
+DEPARTMENT_MODEL_PATH = "ml/department_model_calibrated.pkl"
 
-model = joblib.load(MODEL_PATH)
+category_model = joblib.load(CATEGORY_MODEL_PATH)
+department_model = joblib.load(DEPARTMENT_MODEL_PATH)
 
 
 def recommend(text):
-
-    probabilities = model.predict_proba([text])[0]
-    classes = model.classes_
-
-    ranked = sorted(
-        zip(classes, probabilities),
+    # Predict Category
+    cat_probs = category_model.predict_proba([text])[0]
+    cat_classes = category_model.classes_
+    cat_ranked = sorted(
+        zip(cat_classes, cat_probs),
         key=lambda x: x[1],
         reverse=True
     )
 
-    category, confidence = ranked[0]
-
-    department = CATEGORY_DEPARTMENT_MAP.get(
-        category,
-        "General Administration"
+    # Predict Department
+    dept_probs = department_model.predict_proba([text])[0]
+    dept_classes = department_model.classes_
+    dept_ranked = sorted(
+        zip(dept_classes, dept_probs),
+        key=lambda x: x[1],
+        reverse=True
     )
+
+    category, cat_conf = cat_ranked[0]
+    department, dept_conf = dept_ranked[0]
+
+    # Overall confidence is the minimum of both, ensuring conservative auto-routing
+    confidence = min(cat_conf, dept_conf)
     decision = get_decision(confidence)
 
     alternatives = []
 
-    for cat, probability in ranked[:3]:
-
+    for i in range(3):
+        cat, cat_p = cat_ranked[i]
+        dept, dept_p = dept_ranked[i]
+        
         alternatives.append({
             "category": cat,
-            "confidence": round(
-                float(probability),
-                4
-            ),
-            "department":
-                CATEGORY_DEPARTMENT_MAP.get(
-                    cat,
-                    "General Administration"
-                )
+            "department": dept,
+            "confidence": round(float(min(cat_p, dept_p)), 4)
         })
 
     return {
-    "category": category,
-    "department": department,
-    "confidence": round(float(confidence), 4),
-    "decision": decision,
-    "alternatives": alternatives
-}
+        "category": category,
+        "department": department,
+        "confidence": round(float(confidence), 4),
+        "decision": decision,
+        "alternatives": alternatives
+    }
 
 
 if __name__ == "__main__":
@@ -86,7 +89,7 @@ if __name__ == "__main__":
         for item in result["alternatives"]:
             print(
                 item["category"],
-                "→",
+                "->",
                 item["department"],
                 f"({item['confidence']:.2%})"
             )
