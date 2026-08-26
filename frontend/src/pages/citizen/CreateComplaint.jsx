@@ -227,7 +227,7 @@ const CreateComplaint = () => {
                 value={formData.title} onChange={handleChange} required minLength={5} maxLength={150} />
             </div>
             <div className="form-group col-span-2">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
                 <label className="form-label" style={{ marginBottom: 0 }}>Description *</label>
                 <button
                   type="button"
@@ -235,23 +235,24 @@ const CreateComplaint = () => {
                   disabled={isTranscribing}
                   title={isRecording ? 'Stop recording' : 'Record voice'}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                    padding: '0.35rem 0.7rem', borderRadius: 'var(--radius-md)',
-                    border: isRecording ? '1.5px solid var(--color-error)' : '1.5px solid var(--color-border)',
-                    background: isRecording ? 'rgba(197,48,48,0.08)' : '#fafbfc',
-                    color: isRecording ? 'var(--color-error)' : 'var(--color-text-muted)',
+                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-lg)',
+                    border: isRecording ? '2px solid var(--color-error)' : '2px solid var(--color-primary)',
+                    background: isRecording ? 'rgba(197,48,48,0.1)' : 'var(--color-primary)',
+                    color: isRecording ? 'var(--color-error)' : '#ffffff',
                     cursor: isTranscribing ? 'wait' : 'pointer',
-                    fontSize: '0.78rem', fontWeight: 600, fontFamily: 'inherit',
+                    fontSize: '0.95rem', fontWeight: 700, fontFamily: 'inherit',
                     transition: 'var(--transition)',
+                    boxShadow: isRecording ? 'none' : 'var(--shadow-sm)',
                     animation: isRecording ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
                   }}
                 >
                   {isTranscribing ? (
-                    <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Transcribing...</>
+                    <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Transcribing...</>
                   ) : isRecording ? (
-                    <><MicOff size={14} /> Stop</>
+                    <><MicOff size={18} /> Stop Recording</>
                   ) : (
-                    <><Mic size={14} /> Voice Input</>
+                    <><Mic size={18} /> Voice Input</>
                   )}
                 </button>
               </div>
