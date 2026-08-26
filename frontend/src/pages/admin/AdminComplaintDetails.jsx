@@ -91,13 +91,30 @@ const AdminComplaintDetails = () => {
               </div>
               <div className="form-group">
                 <label className="form-label">Officer *</label>
-                <select className="form-control" value={selectedOfficer} onChange={(e) => setSelectedOfficer(e.target.value)} disabled={!selectedDepartment}>
-                  <option value="">Select Officer</option>
+                <select 
+                  className="form-control" 
+                  value={selectedOfficer} 
+                  onChange={(e) => setSelectedOfficer(e.target.value)} 
+                  disabled={!selectedDepartment || officers.length === 0}
+                  style={officers.length === 0 && selectedDepartment ? { borderColor: 'var(--color-warning)', background: '#fffbeb' } : {}}
+                >
+                  {!selectedDepartment ? (
+                    <option value="">Select Department First</option>
+                  ) : officers.length === 0 ? (
+                    <option value="">⚠️ No officers available in this department</option>
+                  ) : (
+                    <option value="">Select Officer</option>
+                  )}
                   {officers.map(o => <option key={o.id} value={o.id}>{o.fullName}</option>)}
                 </select>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem', alignItems: 'center', gap: '1rem' }}>
+              {(!selectedOfficer && selectedDepartment && officers.length === 0) && (
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)', fontWeight: 600 }}>
+                  You must create an officer account for this department first.
+                </span>
+              )}
               <button className="btn btn-primary" onClick={handleAssign} disabled={assigning || !selectedDepartment || !selectedOfficer}>
                 {assigning ? 'Assigning...' : '📋 Assign / Reassign'}
               </button>
