@@ -7,10 +7,7 @@ app = Flask(__name__)
 
 @app.get("/health")
 def health():
-    return jsonify({
-        "status": "UP",
-        "service": "AI Department Recommendation"
-    })
+    return "UP", 200
 
 
 @app.post("/recommend")

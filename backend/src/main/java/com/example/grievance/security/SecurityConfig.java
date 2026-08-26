@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/test/public").permitAll()
                         .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/api/reference/**").permitAll()
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         // Role-based endpoints
                         .requestMatchers("/api/citizen/**").hasRole("CITIZEN")
