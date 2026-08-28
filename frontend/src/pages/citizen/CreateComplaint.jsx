@@ -6,7 +6,7 @@ import speechService from '../../services/speechService';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import AiDecisionBadge from '../../components/common/AiDecisionBadge';
 import ConfidenceMeter from '../../components/common/ConfidenceMeter';
-import { ArrowLeft, Upload, Sparkles, CheckCircle2, Mic, MicOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ClipboardList, Upload, Sparkles, CheckCircle2, Mic, MicOff, Loader2 } from 'lucide-react';
 
 const CreateComplaint = () => {
   const navigate = useNavigate();
@@ -187,7 +187,7 @@ const CreateComplaint = () => {
               My Complaints
             </button>
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate(`/citizen/complaints/${successData.id}`)}>
-              View Details →
+              View Details <ArrowRight size={16} />
             </button>
           </div>
         </div>
@@ -302,7 +302,7 @@ const CreateComplaint = () => {
             <div className="form-actions col-span-2" style={{ marginTop: '0.5rem' }}>
               <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>Cancel</button>
               <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Submitting...' : '📋 Submit Complaint'}
+                {loading ? 'Submitting...' : <><ClipboardList size={16} /> Submit Complaint</>}
               </button>
             </div>
           </div>

@@ -5,7 +5,7 @@ import { SERVER_BASE_URL } from '../../services/api';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
-import { MapPin, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle, FileText, MapPin, ArrowLeft, PlayCircle } from 'lucide-react';
 
 const OfficerComplaintDetails = () => {
   const { id } = useParams();
@@ -84,13 +84,13 @@ const OfficerComplaintDetails = () => {
                 {complaint.status === 'ASSIGNED' && (
                   <button className="btn" style={{ background: 'var(--color-warning)', color: '#fff' }}
                     onClick={() => handleStatusUpdate('IN_PROGRESS')} disabled={updating}>
-                    ⚡ Start Work
+                    <PlayCircle size={16} /> Start Work
                   </button>
                 )}
                 {complaint.status === 'IN_PROGRESS' && (
                   <button className="btn" style={{ background: 'var(--color-success)', color: '#fff' }}
                     onClick={() => handleStatusUpdate('RESOLVED')} disabled={updating}>
-                    ✅ Mark Resolved
+                    <CheckCircle size={16} /> Mark Resolved
                   </button>
                 )}
               </div>

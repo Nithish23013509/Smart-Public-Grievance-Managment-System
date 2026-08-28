@@ -137,6 +137,15 @@ a:hover { color: var(--color-primary-dark); text-decoration: underline; }
   background: var(--color-surface); border-radius: var(--radius-xl);
   box-shadow: var(--shadow-glass); padding: 1.75rem;
   border: 1px solid rgba(0,0,0,0.03); transition: var(--transition);
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-info));
+  opacity: 0.82;
 }
 .card-hover:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px) scale(1.01); }
 
@@ -147,12 +156,22 @@ a:hover { color: var(--color-primary-dark); text-decoration: underline; }
   border: 1px solid rgba(0,0,0,0.03); transition: var(--transition);
   border-top: 4px solid var(--color-primary); position: relative; overflow: hidden;
 }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, transparent 0%, rgba(255,255,255,0.75) 42%, transparent 64%);
+  transform: translateX(-115%);
+  transition: transform 0.8s ease;
+  pointer-events: none;
+}
 .stat-card::after {
   content: ''; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px;
   background: radial-gradient(circle, rgba(166,20,22,0.08) 0%, transparent 70%);
   border-radius: 50%;
 }
 .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px) scale(1.01); }
+.stat-card:hover::before { transform: translateX(115%); }
 .stat-card .stat-label { color: var(--color-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .stat-card .stat-value { font-size: 2.2rem; font-weight: 800; margin-top: 0.35rem; color: var(--color-text); letter-spacing: -0.03em; }
 
@@ -224,12 +243,14 @@ table { width: 100%; border-collapse: separate; border-spacing: 0; }
 th {
   padding: 0.85rem 1.25rem; color: var(--color-text-muted); font-weight: 700;
   font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
-  border-bottom: 2px solid var(--color-border); background: #f7f8fa; text-align: left;
+  border-bottom: 2px solid var(--color-border);
+  background: linear-gradient(180deg, #ffffff, #f3f5f8);
+  text-align: left;
 }
 th:first-child { border-top-left-radius: var(--radius-lg); }
 th:last-child  { border-top-right-radius: var(--radius-lg); }
-td { padding: 0.85rem 1.25rem; border-bottom: 1px solid #f0f1f3; font-size: 0.875rem; transition: background 0.15s; }
-tbody tr:hover td { background: #f8f9fb; }
+td { padding: 0.85rem 1.25rem; border-bottom: 1px solid #f0f1f3; font-size: 0.875rem; transition: var(--transition); }
+tbody tr:hover td { background: #fffaf0; transform: translateX(2px); }
 tbody tr:last-child td { border-bottom: none; }
 
 /* ========== DASHBOARD LAYOUT ========== */
@@ -301,7 +322,34 @@ tbody tr:last-child td { border-bottom: none; }
   padding: 0 2rem; position: sticky; top: 0; z-index: 10;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
-.content-area { flex: 1; padding: 2rem; overflow-y: auto; }
+.content-area {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.72), rgba(240,241,243,0.98) 34%),
+    repeating-linear-gradient(135deg, rgba(166,20,22,0.035) 0 1px, transparent 1px 24px);
+}
+
+.content-area > div:not(.modal-overlay) {
+  animation: reveal-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.content-area h1 {
+  position: relative;
+  padding-left: 0.85rem;
+}
+
+.content-area h1::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.18rem;
+  bottom: 0.18rem;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-secondary));
+}
 
 /* ========== PUBLIC GOVERNMENT HOME ========== */
 .gov-home {
@@ -779,6 +827,108 @@ tbody tr:last-child td { border-bottom: none; }
 .reveal-delay-1 { animation-delay: 0.12s; }
 .reveal-delay-2 { animation-delay: 0.24s; }
 .reveal-delay-3 { animation-delay: 0.36s; }
+
+/* ========== AUTHENTICATION SCREENS ========== */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(135deg, rgba(90,9,9,0.08), transparent 34%),
+    linear-gradient(315deg, rgba(244,192,34,0.16), transparent 36%),
+    var(--color-bg);
+}
+
+.auth-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.auth-panel {
+  width: 100%;
+  max-width: 620px;
+}
+
+.auth-panel--compact {
+  max-width: 440px;
+}
+
+.auth-heading {
+  text-align: center;
+  margin-bottom: 1.6rem;
+}
+
+.official-seal--large {
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 0.9rem;
+}
+
+.auth-kicker {
+  margin-bottom: 0.7rem;
+  color: var(--color-primary-dark);
+  background: rgba(244,192,34,0.24);
+  border-color: rgba(166,20,22,0.18);
+}
+
+.auth-heading h2 {
+  font-size: 1.45rem;
+  font-weight: 850;
+  color: var(--color-text);
+}
+
+.auth-heading p {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  margin-top: 0.25rem;
+}
+
+.auth-card {
+  padding: 2rem;
+  box-shadow: 0 24px 60px rgba(20,24,39,0.1);
+  border: 1px solid rgba(166,20,22,0.08);
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  font-size: 0.95rem;
+}
+
+.auth-links {
+  margin-top: 1.35rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
+}
+
+.auth-links a {
+  font-weight: 700;
+}
+
+.auth-back-link {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.auth-back-link a {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.auth-footer {
+  text-align: center;
+  padding: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.5);
+}
 
 /* ========== GRID ========== */
 .grid { display: grid; }

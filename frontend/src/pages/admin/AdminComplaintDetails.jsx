@@ -7,7 +7,7 @@ import userService from '../../services/userService';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
-import { MapPin, FileText, CheckCircle, Shield, ArrowLeft } from 'lucide-react';
+import { ClipboardList, MapPin, FileText, CheckCircle, Shield, ArrowLeft } from 'lucide-react';
 
 const AdminComplaintDetails = () => {
   const { id } = useParams();
@@ -101,7 +101,7 @@ const AdminComplaintDetails = () => {
                   {!selectedDepartment ? (
                     <option value="">Select Department First</option>
                   ) : officers.length === 0 ? (
-                    <option value="">⚠️ No officers available in this department</option>
+                    <option value="">No officers available in this department</option>
                   ) : (
                     <option value="">Select Officer</option>
                   )}
@@ -116,7 +116,7 @@ const AdminComplaintDetails = () => {
                 </span>
               )}
               <button className="btn btn-primary" onClick={handleAssign} disabled={assigning || !selectedDepartment || !selectedOfficer}>
-                {assigning ? 'Assigning...' : '📋 Assign / Reassign'}
+                {assigning ? 'Assigning...' : <><ClipboardList size={16} /> Assign / Reassign</>}
               </button>
             </div>
           </div>
