@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building, Menu, X, Sparkles, BarChart3 } from 'lucide-react';
+import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building, Menu, X, Sparkles, BarChart3, Landmark } from 'lucide-react';
 
 const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
@@ -51,7 +51,7 @@ const DashboardLayout = () => {
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flex: 1 }} onClick={() => navigate('/')}>
-            <div className="sidebar-logo-icon">🏛️</div>
+            <div className="sidebar-logo-icon"><Landmark size={23} strokeWidth={2.2} /></div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2 }}>SmartGrievance</div>
               <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Government Portal</div>
