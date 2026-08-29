@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import ErrorMessage from '../../components/common/ErrorMessage';
@@ -10,8 +10,16 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { login } = useContext(AuthContext);
+  const { login, isAuthenticated, user } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === 'CITIZEN') navigate('/citizen/dashboard');
+      else if (user.role === 'OFFICER') navigate('/officer/dashboard');
+      else if (user.role === 'ADMIN') navigate('/admin/dashboard');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

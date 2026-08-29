@@ -1,5 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import {
   BadgeCheck,
   BarChart3,
@@ -31,6 +32,17 @@ const featureCards = [
 ];
 
 const Home = () => {
+  const { isAuthenticated, user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === 'CITIZEN') navigate('/citizen/dashboard');
+      else if (user.role === 'OFFICER') navigate('/officer/dashboard');
+      else if (user.role === 'ADMIN') navigate('/admin/dashboard');
+    }
+  }, [isAuthenticated, user, navigate]);
+
   return (
     <div className="gov-home">
       <div className="top-gov-banner">
