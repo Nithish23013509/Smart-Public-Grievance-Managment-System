@@ -197,23 +197,39 @@ const CreateComplaint = () => {
 
   // ——— Form ———
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <button className="btn btn-ghost" onClick={() => navigate(-1)} style={{ marginBottom: '0.75rem', padding: '0.3rem 0' }}>
-        <ArrowLeft size={16} /> Back
-      </button>
-      <div style={{ marginBottom: '1.75rem' }}>
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-text)' }}>Submit New Complaint</h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '0.15rem' }}>Fill in the details of your public grievance</p>
+    <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '2rem' }}>
+      <div style={{ marginBottom: '1rem' }}>
+        <button className="btn btn-ghost" onClick={() => navigate(-1)} style={{ padding: '0.3rem 0' }}>
+          <ArrowLeft size={16} /> Back to Dashboard
+        </button>
       </div>
 
-      {/* AI Notice */}
+      {/* Premium Hero Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)', border: '1px solid #93c5fd',
-        borderRadius: 'var(--radius-lg)', padding: '0.85rem 1.1rem', marginBottom: '1.25rem',
-        display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.82rem', color: '#1e40af'
+        background: 'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%)',
+        borderRadius: 'var(--radius-xl)',
+        padding: '2.5rem',
+        color: '#fff',
+        marginBottom: '2rem',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-primary)'
       }}>
-        <Sparkles size={18} style={{ flexShrink: 0 }} />
-        <span><strong>Smart Routing:</strong> Category and department are automatically determined by our AI based on your description. Just describe your issue clearly.</span>
+        <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.1, transform: 'rotate(15deg)' }}>
+          <Sparkles size={160} />
+        </div>
+        
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
+            Submit New Grievance
+          </h1>
+          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.85)', maxWidth: '500px', lineHeight: 1.5, marginBottom: '1rem' }}>
+            Fill in the details below. Our AI will automatically categorize your issue and route it to the correct government department.
+          </p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', fontWeight: 600 }}>
+            <Sparkles size={14} /> AI Smart Routing Enabled
+          </div>
+        </div>
       </div>
 
       <div className="card">
