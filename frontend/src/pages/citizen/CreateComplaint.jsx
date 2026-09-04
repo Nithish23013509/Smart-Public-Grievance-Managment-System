@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import complaintService from '../../services/complaintService';
 import locationService from '../../services/locationService';
@@ -7,15 +12,23 @@ import ErrorMessage from '../../components/common/ErrorMessage';
 import AiDecisionBadge from '../../components/common/AiDecisionBadge';
 import ConfidenceMeter from '../../components/common/ConfidenceMeter';
 import { ArrowLeft, ArrowRight, ClipboardList, Upload, Sparkles, CheckCircle2, Mic, MicOff, Loader2 } from 'lucide-react';
+import ComplaintLocationMap from '../../components/complaint/ComplaintLocationMap';
 
 const CreateComplaint = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
-    title: '', description: '',
-    districtId: '', revenueDivisionId: '', talukId: '', localBodyId: '', locationAddress: ''
-  });
+  title: '',
+  description: '',
+  districtId: '',
+  revenueDivisionId: '',
+  talukId: '',
+  localBodyId: '',
+  locationAddress: '',
+  latitude: '',
+  longitude: ''
+});
   const [image, setImage] = useState(null);
   const [districts, setDistricts] = useState([]);
   const [divisions, setDivisions] = useState([]);
@@ -117,7 +130,14 @@ const CreateComplaint = () => {
         title: formData.title, description: formData.description,
         districtId: Number(formData.districtId), locationAddress: formData.locationAddress,
         revenueDivisionId: formData.revenueDivisionId ? Number(formData.revenueDivisionId) : null,
-        talukId: formData.talukId ? Number(formData.talukId) : null
+        talukId: formData.talukId ? Number(formData.talukId) : null,
+        latitude: formData.latitude
+  ? Number(formData.latitude)
+  : null,
+
+longitude: formData.longitude
+  ? Number(formData.longitude)
+  : null,
       };
 
       if (image) {
@@ -194,6 +214,21 @@ const CreateComplaint = () => {
       </div>
     );
   }
+
+  const handleMapLocationChange = useCallback(({ lat, lng }) => {
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng
+    }));
+  }, []);
+
+  const handleMapAddressChange = useCallback((address) => {
+    setFormData(prev => ({
+      ...prev,
+      locationAddress: address
+    }));
+  }, []);
 
   // ——— Form ———
   return (
@@ -296,10 +331,32 @@ const CreateComplaint = () => {
               </select>
             </div>
             <div className="form-group col-span-2">
-              <label className="form-label">Exact Location Address *</label>
-              <input type="text" name="locationAddress" className="form-control" placeholder="Street name, landmark, etc."
-                value={formData.locationAddress} onChange={handleChange} required />
-            </div>
+  <label className="form-label">
+    Select Complaint Location on Map
+  </label>
+
+  <ComplaintLocationMap
+    latitude={formData.latitude}
+    longitude={formData.longitude}
+    onLocationChange={handleMapLocationChange}
+    onAddressChange={handleMapAddressChange}
+  />
+</div>
+<div className="form-group col-span-2" style={{ marginTop: '0.5rem' }}>
+  <label className="form-label">
+    Exact Location Address *
+  </label>
+
+  <input
+    type="text"
+    name="locationAddress"
+    className="form-control"
+    placeholder="Select a location on the map..."
+    value={formData.locationAddress || ''}
+    onChange={handleChange}
+    required
+  />
+</div>
             <div className="form-group col-span-2">
               <label className="form-label">Supporting Image (Optional)</label>
               <div style={{
