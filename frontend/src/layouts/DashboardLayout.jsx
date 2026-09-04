@@ -95,7 +95,7 @@ const DashboardLayout = () => {
           <div className="band-red"></div><div className="band-gold"></div><div className="band-red"></div>
         </div>
 
-        <header className="top-header">
+        <header className={`top-header ${hasBottomNav ? 'desktop-only' : ''}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {!hasBottomNav && (
               <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--color-text)', cursor: 'pointer', display: 'flex' }}>
