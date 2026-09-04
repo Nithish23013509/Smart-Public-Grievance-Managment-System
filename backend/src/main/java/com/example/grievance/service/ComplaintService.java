@@ -163,7 +163,7 @@ public class ComplaintService {
         complaint.setAiAlternativesJson(aiAlternativesJson);
         complaint.setCitizen(citizen);
         complaint.setDistrict(district);
-        complaint.setLocationAddress(request.getLocationAddress());
+
         complaint.setLatitude(request.getLatitude());
         complaint.setLongitude(request.getLongitude());
         complaint.setStatus(ComplaintStatus.SUBMITTED);

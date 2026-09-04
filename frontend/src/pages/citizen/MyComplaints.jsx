@@ -29,105 +29,159 @@ const MyComplaints = () => {
 
   if (loading && complaints.length === 0) return <LoadingSpinner />;
 
+  // Shared complaint list renderer
+  const renderComplaintCards = () => (
+    complaints.map(c => (
+      <Link key={c.id} to={`/citizen/complaints/${c.id}`} className="mobile-complaint-card">
+        <div className="complaint-card-header">
+          <div className="complaint-card-title">{c.title}</div>
+          <StatusBadge status={c.status} />
+        </div>
+        <div className="complaint-card-meta">
+          <span style={{ fontWeight: 600 }}>#{c.complaintNumber}</span>
+          <span>•</span>
+          <span>{c.categoryName}</span>
+          <span>•</span>
+          <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+        </div>
+      </Link>
+    ))
+  );
+
+  const renderPagination = () => totalPages > 1 && (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem' }}>
+      <button className="btn btn-outline" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>← Prev</button>
+      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Page {page + 1} of {totalPages}</span>
+      <button className="btn btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Next →</button>
+    </div>
+  );
+
   return (
-    <div style={{ paddingBottom: '2rem' }}>
-      {/* Premium Header Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--color-surface) 0%, #fafbfc 100%)',
-        borderRadius: 'var(--radius-xl)',
-        padding: '2.5rem',
-        marginBottom: '2rem',
-        border: '1px solid var(--color-border)',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1.5rem'
-      }}>
-        <div style={{ position: 'absolute', top: '-10px', right: '20px', opacity: 0.05, transform: 'rotate(10deg)' }}>
-          <FolderOpen size={140} color="var(--color-primary)" />
+    <div style={{ paddingBottom: '1rem' }}>
+
+      {/* ===== MOBILE LAYOUT ===== */}
+      <div className="mobile-only">
+        <div className="mobile-hero" style={{ paddingBottom: '2rem' }}>
+          <h1 style={{ fontSize: '1.4rem' }}>My Complaints</h1>
+          <p>Track the status of all your submissions.</p>
         </div>
-        
-        <div style={{ background: 'rgba(244,192,34,0.15)', color: 'var(--color-secondary-dark)', padding: '1rem', borderRadius: '50%', flexShrink: 0 }}>
-          <LayoutList size={32} />
-        </div>
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>My Complaints</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '1rem', maxWidth: '500px' }}>
-            View and track the status of all grievances you have submitted.
-          </p>
-        </div>
-      </div>
-      
-      <ErrorMessage message={error} />
-      
-      <div className="card" style={{ padding: '2rem' }}>
+
+        <ErrorMessage message={error} />
+
         {complaints.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--color-text-muted)' }}>
-            <FolderOpen size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.5rem' }}>No grievances found</h3>
-            <p>You haven't submitted any complaints yet.</p>
+          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--color-text-muted)' }}>
+            <FolderOpen size={40} style={{ margin: '0 auto 0.75rem', opacity: 0.3 }} />
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.3rem' }}>No grievances yet</h3>
+            <p style={{ fontSize: '0.85rem' }}>You haven't submitted any complaints.</p>
           </div>
         ) : (
-          <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {complaints.map(c => (
-                <Link key={c.id} to={`/citizen/complaints/${c.id}`} style={{ 
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: '#fafbfc',
-                  border: '1px solid var(--color-border)', textDecoration: 'none', color: 'inherit',
-                  transition: 'var(--transition)'
-                }} className="card-hover">
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ 
-                      width: '48px', height: '48px', borderRadius: 'var(--radius-md)', 
-                      background: 'rgba(166,20,22,0.05)', display: 'flex', alignItems: 'center', 
-                      justifyContent: 'center', color: 'var(--color-primary)' 
-                    }}>
-                      <FileText size={24} />
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.2rem', color: 'var(--color-text)' }}>{c.title}</h3>
-                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                        <span style={{ fontWeight: 600 }}>#{c.complaintNumber}</span>
-                        <span>•</span>
-                        <span>{c.categoryName}</span>
-                        <span>•</span>
-                        <span>{c.departmentName}</span>
-                        <span>•</span>
-                        <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+            {renderComplaintCards()}
+            {renderPagination()}
+          </div>
+        )}
+      </div>
+
+      {/* ===== DESKTOP LAYOUT ===== */}
+      <div className="desktop-hero">
+        {/* Premium Header Banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, var(--color-surface) 0%, #fafbfc 100%)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '2.5rem',
+          marginBottom: '2rem',
+          border: '1px solid var(--color-border)',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5rem'
+        }}>
+          <div style={{ position: 'absolute', top: '-10px', right: '20px', opacity: 0.05, transform: 'rotate(10deg)' }}>
+            <FolderOpen size={140} color="var(--color-primary)" />
+          </div>
+          
+          <div style={{ background: 'rgba(244,192,34,0.15)', color: 'var(--color-secondary-dark)', padding: '1rem', borderRadius: '50%', flexShrink: 0 }}>
+            <LayoutList size={32} />
+          </div>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>My Complaints</h1>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '1rem', maxWidth: '500px' }}>
+              View and track the status of all grievances you have submitted.
+            </p>
+          </div>
+        </div>
+        
+        <ErrorMessage message={error} />
+        
+        <div className="card" style={{ padding: '2rem' }}>
+          {complaints.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--color-text-muted)' }}>
+              <FolderOpen size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.5rem' }}>No grievances found</h3>
+              <p>You haven't submitted any complaints yet.</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {complaints.map(c => (
+                  <Link key={c.id} to={`/citizen/complaints/${c.id}`} style={{ 
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '1.25rem', borderRadius: 'var(--radius-lg)', background: '#fafbfc',
+                    border: '1px solid var(--color-border)', textDecoration: 'none', color: 'inherit',
+                    transition: 'var(--transition)'
+                  }} className="card-hover">
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                      <div style={{ 
+                        width: '48px', height: '48px', borderRadius: 'var(--radius-md)', 
+                        background: 'rgba(166,20,22,0.05)', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'center', color: 'var(--color-primary)' 
+                      }}>
+                        <FileText size={24} />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.2rem', color: 'var(--color-text)' }}>{c.title}</h3>
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                          <span style={{ fontWeight: 600 }}>#{c.complaintNumber}</span>
+                          <span>•</span>
+                          <span>{c.categoryName}</span>
+                          <span>•</span>
+                          <span>{c.departmentName}</span>
+                          <span>•</span>
+                          <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <StatusBadge status={c.status} />
-                    <ChevronRight size={18} color="var(--color-text-muted)" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-            
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-                <button className="btn btn-outline" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Previous</button>
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button key={i} 
-                      onClick={() => setPage(i)}
-                      style={{ 
-                        width: '32px', height: '32px', borderRadius: 'var(--radius-md)', 
-                        border: 'none', background: page === i ? 'var(--color-primary)' : 'transparent',
-                        color: page === i ? '#fff' : 'var(--color-text-muted)',
-                        fontWeight: 600, cursor: 'pointer', transition: 'var(--transition)'
-                      }}
-                    >{i + 1}</button>
-                  ))}
-                </div>
-                <button className="btn btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <StatusBadge status={c.status} />
+                      <ChevronRight size={18} color="var(--color-text-muted)" />
+                    </div>
+                  </Link>
+                ))}
               </div>
-            )}
-          </>
-        )}
+              
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
+                  <button className="btn btn-outline" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Previous</button>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button key={i} 
+                        onClick={() => setPage(i)}
+                        style={{ 
+                          width: '32px', height: '32px', borderRadius: 'var(--radius-md)', 
+                          border: 'none', background: page === i ? 'var(--color-primary)' : 'transparent',
+                          color: page === i ? '#fff' : 'var(--color-text-muted)',
+                          fontWeight: 600, cursor: 'pointer', transition: 'var(--transition)'
+                        }}
+                      >{i + 1}</button>
+                    ))}
+                  </div>
+                  <button className="btn btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

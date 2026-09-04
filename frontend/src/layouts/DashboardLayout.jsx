@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { Home, FileText, PlusCircle, Bell, User, LogOut, Users, Building, Menu, X, Sparkles, BarChart3, Landmark } from 'lucide-react';
+import BottomNav from '../components/common/BottomNav';
 
 const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
@@ -117,6 +118,7 @@ const DashboardLayout = () => {
         <div className="content-area">
           <Outlet />
         </div>
+        <BottomNav />
       </main>
     </div>
   );
