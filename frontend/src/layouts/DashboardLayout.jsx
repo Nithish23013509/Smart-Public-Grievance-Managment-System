@@ -44,12 +44,16 @@ const DashboardLayout = () => {
     );
   };
 
+  const hasBottomNav = user?.role === 'CITIZEN' || user?.role === 'OFFICER';
+
   return (
     <div className="dashboard-layout">
       {/* Mobile overlay */}
-      <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar}></div>
+      {!hasBottomNav && (
+        <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar}></div>
+      )}
 
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''} ${hasBottomNav ? 'desktop-only' : ''}`}>
         <div className="sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flex: 1 }} onClick={() => navigate('/')}>
             <div className="sidebar-logo-icon"><Landmark size={23} strokeWidth={2.2} /></div>
@@ -93,9 +97,11 @@ const DashboardLayout = () => {
 
         <header className="top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--color-text)', cursor: 'pointer', display: 'flex' }}>
-              <Menu size={24} />
-            </button>
+            {!hasBottomNav && (
+              <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--color-text)', cursor: 'pointer', display: 'flex' }}>
+                <Menu size={24} />
+              </button>
+            )}
             <div style={{ fontWeight: 700, color: 'var(--color-text)', fontSize: '0.9rem' }}>
               {user?.role === 'CITIZEN' ? 'Citizen' : user?.role === 'OFFICER' ? 'Officer' : 'Administrator'} Portal
             </div>
