@@ -22,6 +22,8 @@ function LocationSearch({ onPlaceSelect }) {
 
     const autocomplete =
       new placesLibrary.PlaceAutocompleteElement();
+      
+    autocomplete.classList.add('custom-autocomplete');
 
     autocomplete.includedRegionCodes = ['in'];
     autocomplete.placeholder = 'Search location in India...';
@@ -77,16 +79,9 @@ function LocationSearch({ onPlaceSelect }) {
   }, [map, placesLibrary, onPlaceSelect]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'absolute',
-        top: '12px',
-        left: '12px',
-        zIndex: 10,
-        width: 'min(420px, calc(100% - 24px))',
-      }}
-    />
+    <div style={{ width: '100%', marginBottom: '12px' }}>
+      <div ref={containerRef} style={{ width: '100%' }} />
+    </div>
   );
 }
 
@@ -180,15 +175,10 @@ function MapContent({ position, onLocationChange, onAddressFound }) {
   return (
     <div
       style={{
-        position: 'relative',
         width: '100%',
         height: '400px',
       }}
     >
-      <LocationSearch
-        onPlaceSelect={onLocationChange}
-      />
-
       <Map
         defaultCenter={DEFAULT_CENTER}
         defaultZoom={7}
@@ -256,20 +246,20 @@ const ComplaintLocationMap = ({
   }, [latitude, longitude]);
 
   const handleLocationChange = useCallback(
-  (location) => {
-    setPosition({
-      lat: location.lat,
-      lng: location.lng,
-    });
+    (location) => {
+      setPosition({
+        lat: location.lat,
+        lng: location.lng,
+      });
 
-    onLocationChange(location);
+      onLocationChange(location);
 
-    if (location.address) {
-      onAddressChange?.(location.address);
-    }
-  },
-  [onLocationChange, onAddressChange]
-);
+      if (location.address) {
+        onAddressChange?.(location.address);
+      }
+    },
+    [onLocationChange, onAddressChange]
+  );
 
   const handleAddressFound = useCallback(
     (address) => {
@@ -329,7 +319,7 @@ const ComplaintLocationMap = ({
 
   if (!apiKey) {
     return (
-      <div>
+      <div style={{ padding: '2rem', textAlign: 'center', background: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef' }}>
         Google Maps API key is not configured.
       </div>
     );
@@ -340,57 +330,112 @@ const ComplaintLocationMap = ({
       apiKey={apiKey}
       libraries={['places', 'geocoding']}
     >
-      <div
-        style={{
-          width: '100%',
-          borderRadius: '12px',
-          overflow: 'hidden',
-        }}
-      >
-        <MapContent
-          position={position}
-          onLocationChange={handleLocationChange}
-          onAddressFound={handleAddressFound}
-        />
-      </div>
+      <style>
+        {`
+          .custom-autocomplete {
+            width: 100%;
+            display: block;
+            color-scheme: light;
+            background: transparent;
+            --pac-background-color: transparent;
+          }
+          .custom-autocomplete::part(input) {
+            background-color: #ffffff;
+            color: #1a1a2e;
+            border: 1.5px solid #d4d7dd;
+            padding: 12px 16px 12px 40px; /* Leave space for icon */
+            border-radius: 10px;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.28s ease;
+            font-family: inherit;
+            box-sizing: border-box;
+            margin: 0;
+          }
+          .custom-autocomplete::part(input):focus {
+            outline: none;
+            border-color: #a61416;
+            box-shadow: 0 0 0 4px rgba(166,20,22,0.1);
+          }
+          .custom-autocomplete::part(icon) {
+            color: #a61416;
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+        `}
+      </style>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        {/* Search Bar outside of the Map completely */}
+        <LocationSearch onPlaceSelect={handleLocationChange} />
 
-      <button
-        type="button"
-        onClick={handleUseMyLocation}
-        style={{
-          marginTop: '12px',
-          padding: '10px 16px',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: '600',
-          background: '#f1f3f5',
-        }}
-      >
-        📍 Use My Location
-      </button>
-
-      {position && (
         <div
           style={{
-            marginTop: '0.75rem',
-            padding: '0.75rem',
-            background: '#f8f9fb',
-            borderRadius: '8px',
-            fontSize: '0.85rem',
+            width: '100%',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            position: 'relative',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-sm)',
+            marginBottom: '1rem'
           }}
         >
-          <strong>Selected Location</strong>
-
-          <div>
-            Latitude: {position.lat.toFixed(6)}
-          </div>
-
-          <div>
-            Longitude: {position.lng.toFixed(6)}
-          </div>
+          <MapContent
+            position={position}
+            onLocationChange={handleLocationChange}
+            onAddressFound={handleAddressFound}
+          />
         </div>
-      )}
+
+        <div>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleUseMyLocation}
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span style={{ fontSize: '1.1rem' }}>📍</span> Use My Current Location
+          </button>
+
+          {position && (
+            <div
+              style={{
+                marginTop: '1rem',
+                padding: '1rem 1.25rem',
+                background: 'rgba(166,20,22,0.04)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid rgba(166,20,22,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.2rem' }}>
+                  Location Selected
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                  <span style={{ fontWeight: 600 }}>Lat:</span> {position.lat.toFixed(6)} <span style={{ margin: '0 6px', color: 'rgba(0,0,0,0.1)' }}>|</span> <span style={{ fontWeight: 600 }}>Lng:</span> {position.lng.toFixed(6)}
+                </div>
+              </div>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-primary)', 
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-primary)'
+              }}>
+                ✓
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </APIProvider>
   );
 };
