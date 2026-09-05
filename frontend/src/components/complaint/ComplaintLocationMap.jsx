@@ -85,7 +85,7 @@ function LocationSearch({ onPlaceSelect }) {
   );
 }
 
-function ReverseGeocoder({ position, onAddressFound }) {
+function ReverseGeocoder({ position, onAddressFound, onDistrictDetected }) {
   const geocodingLibrary = useMapsLibrary('geocoding');
 
   const onAddressFoundRef = useRef(onAddressFound);
@@ -122,12 +122,33 @@ function ReverseGeocoder({ position, onAddressFound }) {
         if (cancelled) return;
 
         if (response.results?.length > 0) {
-          const address = response.results[0].formatted_address;
+    const result = response.results[0];
+    const districtComponent = result.address_components?.find(
+  component =>
+    component.types.includes('administrative_area_level_3')
+);
 
-          console.log('Address found:', address);
+const detectedDistrict = districtComponent?.long_name || '';
 
-          onAddressFoundRef.current(address);
-        } else {
+console.log('Detected District:', detectedDistrict);
+
+if (detectedDistrict) {
+  onDistrictDetected?.(detectedDistrict);
+}
+
+    console.log('Formatted address:', result.formatted_address);
+    console.table(
+  result.address_components.map(component => ({
+    name: component.long_name,
+    types: component.types.join(', ')
+  }))
+);
+
+    const address = result.formatted_address;
+
+    onAddressFoundRef.current(address);
+}
+        else {
           console.warn('No address found');
 
           onAddressFoundRef.current('');
@@ -150,7 +171,7 @@ function ReverseGeocoder({ position, onAddressFound }) {
   return null;
 }
 
-function MapContent({ position, onLocationChange, onAddressFound }) {
+function MapContent({ position, onLocationChange, onAddressFound, onDistrictDetected }) {
   const map = useMap();
 
   const handleMapClick = useCallback(
@@ -216,6 +237,7 @@ function MapContent({ position, onLocationChange, onAddressFound }) {
       <ReverseGeocoder
         position={position}
         onAddressFound={onAddressFound}
+        onDistrictDetected={onDistrictDetected}
       />
     </div>
   );
@@ -226,6 +248,7 @@ const ComplaintLocationMap = ({
   longitude,
   onLocationChange,
   onAddressChange,
+  onDistrictDetected,
 }) => {
   const [position, setPosition] = useState(
     latitude && longitude
@@ -386,6 +409,7 @@ const ComplaintLocationMap = ({
             position={position}
             onLocationChange={handleLocationChange}
             onAddressFound={handleAddressFound}
+            onDistrictDetected={onDistrictDetected}
           />
         </div>
 

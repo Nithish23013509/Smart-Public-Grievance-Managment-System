@@ -5,6 +5,7 @@ import React, {
   useCallback
 } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import complaintService from '../../services/complaintService';
 import locationService from '../../services/locationService';
 import speechService from '../../services/speechService';
@@ -215,6 +216,28 @@ longitude: formData.longitude
     );
   }
 
+  const handleDistrictDetected = useCallback(async (districtName) => {
+    try {
+      const response = await api.get(
+        `/reference/districts/by-name?name=${encodeURIComponent(districtName)}`
+      );
+  
+      const district = response.data?.data;
+  
+      if (!district) return;
+  
+      setFormData(prev => ({
+        ...prev,
+        districtId: String(district.id),
+        revenueDivisionId: '',
+        talukId: '',
+        localBodyId: '',
+      }));
+    } catch (error) {
+      console.error('Failed to detect district:', error);
+    }
+  }, []);
+
   const handleMapLocationChange = useCallback(({ lat, lng }) => {
     setFormData(prev => ({
       ...prev,
@@ -351,6 +374,7 @@ longitude: formData.longitude
     longitude={formData.longitude}
     onLocationChange={handleMapLocationChange}
     onAddressChange={handleMapAddressChange}
+    onDistrictDetected={handleDistrictDetected}
   />
 </div>
 <div className="form-group col-span-2" style={{ marginTop: '0.5rem' }}>
