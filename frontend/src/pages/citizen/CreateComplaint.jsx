@@ -51,6 +51,33 @@ const CreateComplaint = () => {
     loadReferenceData();
   }, []);
 
+  // Cascading Auto-Select Logic
+  useEffect(() => {
+    if (divisions.length === 1 && !formData.revenueDivisionId) {
+      const id = String(divisions[0].id);
+      setFormData(prev => ({ ...prev, revenueDivisionId: id }));
+      locationService.getTaluks(id).then(res => {
+        if (res.success) setTaluks(res.data);
+      });
+    }
+  }, [divisions, formData.revenueDivisionId]);
+
+  useEffect(() => {
+    if (taluks.length === 1 && !formData.talukId) {
+      const id = String(taluks[0].id);
+      setFormData(prev => ({ ...prev, talukId: id }));
+      locationService.getLocalBodies(id).then(res => {
+        if (res.success) setLocalBodies(res.data);
+      });
+    }
+  }, [taluks, formData.talukId]);
+
+  useEffect(() => {
+    if (localBodies.length === 1 && !formData.localBodyId) {
+      setFormData(prev => ({ ...prev, localBodyId: String(localBodies[0].id) }));
+    }
+  }, [localBodies, formData.localBodyId]);
+
   const handleChange = async (e) => {
     const { name, value } = e.target;
 
