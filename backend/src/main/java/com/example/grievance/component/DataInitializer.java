@@ -35,6 +35,9 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         seedRoles();
         seedDistrict();
+        seedRevenueDivisions();
+        seedTaluks();
+        seedLocalBodies();
         seedDepartments();
         seedCategories();
         seedTestUsers();
@@ -58,6 +61,67 @@ public class DataInitializer implements CommandLineRunner {
             district.setCode("CHN");
             districtRepository.save(district);
             log.info("Seeded district: Chennai");
+        }
+    }
+
+    private void seedRevenueDivisions() {
+        if (revenueDivisionRepository.count() == 0) {
+            District chennai = districtRepository.findByNameIgnoreCase("Chennai").orElse(null);
+            if (chennai != null) {
+                com.example.grievance.entity.RevenueDivision north = new com.example.grievance.entity.RevenueDivision();
+                north.setName("North Chennai");
+                north.setDistrict(chennai);
+                revenueDivisionRepository.save(north);
+
+                com.example.grievance.entity.RevenueDivision south = new com.example.grievance.entity.RevenueDivision();
+                south.setName("South Chennai");
+                south.setDistrict(chennai);
+                revenueDivisionRepository.save(south);
+
+                com.example.grievance.entity.RevenueDivision central = new com.example.grievance.entity.RevenueDivision();
+                central.setName("Central Chennai");
+                central.setDistrict(chennai);
+                revenueDivisionRepository.save(central);
+                log.info("Seeded revenue divisions for Chennai");
+            }
+        }
+    }
+
+    private void seedTaluks() {
+        if (talukRepository.count() == 0) {
+            List<com.example.grievance.entity.RevenueDivision> divisions = revenueDivisionRepository.findAll();
+            for (com.example.grievance.entity.RevenueDivision div : divisions) {
+                if (div.getName().equals("North Chennai")) {
+                    com.example.grievance.entity.Taluk t1 = new com.example.grievance.entity.Taluk();
+                    t1.setName("Tondiarpet");
+                    t1.setRevenueDivision(div);
+                    talukRepository.save(t1);
+                } else if (div.getName().equals("South Chennai")) {
+                    com.example.grievance.entity.Taluk t1 = new com.example.grievance.entity.Taluk();
+                    t1.setName("Guindy");
+                    t1.setRevenueDivision(div);
+                    talukRepository.save(t1);
+                } else if (div.getName().equals("Central Chennai")) {
+                    com.example.grievance.entity.Taluk t1 = new com.example.grievance.entity.Taluk();
+                    t1.setName("Mylapore");
+                    t1.setRevenueDivision(div);
+                    talukRepository.save(t1);
+                }
+            }
+            log.info("Seeded taluks");
+        }
+    }
+
+    private void seedLocalBodies() {
+        if (localBodyRepository.count() == 0) {
+            List<com.example.grievance.entity.Taluk> taluks = talukRepository.findAll();
+            for (com.example.grievance.entity.Taluk taluk : taluks) {
+                com.example.grievance.entity.LocalBody lb = new com.example.grievance.entity.LocalBody();
+                lb.setName("Greater Chennai Corporation");
+                lb.setTaluk(taluk);
+                localBodyRepository.save(lb);
+            }
+            log.info("Seeded local bodies");
         }
     }
 

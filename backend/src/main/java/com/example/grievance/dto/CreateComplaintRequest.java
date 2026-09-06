@@ -23,9 +23,9 @@ public class CreateComplaintRequest {
     @NotNull(message = "District is required")
     private Long districtId;
 
-    private Long revenueDivisionId;
-    private Long talukId;
-    private Long localBodyId;
+    private String revenueDivisionName;
+    private String talukName;
+    private String localBodyName;
 
     @NotBlank(message = "Location address is required")
     private String locationAddress;

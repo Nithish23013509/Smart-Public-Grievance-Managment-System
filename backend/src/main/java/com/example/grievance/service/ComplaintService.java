@@ -168,17 +168,9 @@ public class ComplaintService {
         complaint.setLongitude(request.getLongitude());
         complaint.setStatus(ComplaintStatus.SUBMITTED);
 
-        // Optional location entities
-        if (request.getRevenueDivisionId() != null) {
-            complaint.setRevenueDivision(revenueDivisionRepository.findById(request.getRevenueDivisionId())
-                    .orElse(null));
-        }
-        if (request.getTalukId() != null) {
-            complaint.setTaluk(talukRepository.findById(request.getTalukId()).orElse(null));
-        }
-        if (request.getLocalBodyId() != null) {
-            complaint.setLocalBody(localBodyRepository.findById(request.getLocalBodyId()).orElse(null));
-        }
+        complaint.setRevenueDivisionName(request.getRevenueDivisionName());
+        complaint.setTalukName(request.getTalukName());
+        complaint.setLocalBodyName(request.getLocalBodyName());
 
         complaint = complaintRepository.save(complaint);
 
@@ -579,18 +571,9 @@ public class ComplaintService {
             builder.assignedOfficerId(c.getAssignedOfficer().getId())
                     .assignedOfficerName(c.getAssignedOfficer().getFullName());
         }
-        if (c.getRevenueDivision() != null) {
-            builder.revenueDivisionId(c.getRevenueDivision().getId())
-                    .revenueDivisionName(c.getRevenueDivision().getName());
-        }
-        if (c.getTaluk() != null) {
-            builder.talukId(c.getTaluk().getId())
-                    .talukName(c.getTaluk().getName());
-        }
-        if (c.getLocalBody() != null) {
-            builder.localBodyId(c.getLocalBody().getId())
-                    .localBodyName(c.getLocalBody().getName());
-        }
+        builder.revenueDivisionName(c.getRevenueDivisionName());
+        builder.talukName(c.getTalukName());
+        builder.localBodyName(c.getLocalBodyName());
 
         return builder.build();
     }

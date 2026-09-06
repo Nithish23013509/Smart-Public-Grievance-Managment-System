@@ -37,11 +37,8 @@ public class ComplaintResponse {
     // Location
     private Long districtId;
     private String districtName;
-    private Long revenueDivisionId;
     private String revenueDivisionName;
-    private Long talukId;
     private String talukName;
-    private Long localBodyId;
     private String localBodyName;
     private String locationAddress;
     private Double latitude;

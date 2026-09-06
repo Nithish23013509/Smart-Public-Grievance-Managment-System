@@ -85,14 +85,19 @@ function LocationSearch({ onPlaceSelect }) {
   );
 }
 
-function ReverseGeocoder({ position, onAddressFound, onDistrictDetected }) {
+function ReverseGeocoder({ position, onAddressFound, onLocationDetailsDetected }) {
   const geocodingLibrary = useMapsLibrary('geocoding');
 
   const onAddressFoundRef = useRef(onAddressFound);
+  const onLocationDetailsDetectedRef = useRef(onLocationDetailsDetected);
 
   useEffect(() => {
     onAddressFoundRef.current = onAddressFound;
   }, [onAddressFound]);
+
+  useEffect(() => {
+    onLocationDetailsDetectedRef.current = onLocationDetailsDetected;
+  }, [onLocationDetailsDetected]);
 
   const lat = position?.lat;
   const lng = position?.lng;
@@ -122,19 +127,47 @@ function ReverseGeocoder({ position, onAddressFound, onDistrictDetected }) {
         if (cancelled) return;
 
         if (response.results?.length > 0) {
-    const result = response.results[0];
-    const districtComponent = result.address_components?.find(
-  component =>
-    component.types.includes('administrative_area_level_3')
-);
+          const result = response.results[0];
+          
+          let district = '';
+          let taluk = '';
+          let localBody = '';
+          let revenueDivision = ''; // Rarely provided by Google Maps directly
 
-const detectedDistrict = districtComponent?.long_name || '';
+          result.address_components?.forEach(component => {
+            const types = component.types;
+            if (types.includes('administrative_area_level_3')) {
+              district = component.long_name;
+            }
+            if (types.includes('sublocality') || types.includes('sublocality_level_1')) {
+              taluk = component.long_name;
+            }
+            if (types.includes('locality')) {
+              localBody = component.long_name;
+            }
+          });
 
-console.log('Detected District:', detectedDistrict);
+          // Sometimes admin_area_level_3 is actually the Taluk, and level_2 is the District.
+          // Let's refine based on standard India Google Maps structure:
+          result.address_components?.forEach(component => {
+             if (component.types.includes('administrative_area_level_2')) {
+               district = component.long_name;
+             }
+             if (component.types.includes('administrative_area_level_3')) {
+               taluk = component.long_name;
+             }
+          });
 
-if (detectedDistrict) {
-  onDistrictDetected?.(detectedDistrict);
-}
+          console.log('Detected Locations:', { district, taluk, localBody });
+
+          if (onLocationDetailsDetectedRef.current) {
+             onLocationDetailsDetectedRef.current({
+                district,
+                taluk,
+                localBody,
+                revenueDivision
+             });
+          }
 
     console.log('Formatted address:', result.formatted_address);
     console.table(
@@ -171,7 +204,7 @@ if (detectedDistrict) {
   return null;
 }
 
-function MapContent({ position, onLocationChange, onAddressFound, onDistrictDetected }) {
+function MapContent({ position, onLocationChange, onAddressFound, onLocationDetailsDetected }) {
   const map = useMap();
 
   const handleMapClick = useCallback(
@@ -237,7 +270,7 @@ function MapContent({ position, onLocationChange, onAddressFound, onDistrictDete
       <ReverseGeocoder
         position={position}
         onAddressFound={onAddressFound}
-        onDistrictDetected={onDistrictDetected}
+        onLocationDetailsDetected={onLocationDetailsDetected}
       />
     </div>
   );
@@ -248,7 +281,7 @@ const ComplaintLocationMap = ({
   longitude,
   onLocationChange,
   onAddressChange,
-  onDistrictDetected,
+  onLocationDetailsDetected,
 }) => {
   const [position, setPosition] = useState(
     latitude && longitude
@@ -409,7 +442,7 @@ const ComplaintLocationMap = ({
             position={position}
             onLocationChange={handleLocationChange}
             onAddressFound={handleAddressFound}
-            onDistrictDetected={onDistrictDetected}
+            onLocationDetailsDetected={onLocationDetailsDetected}
           />
         </div>
 

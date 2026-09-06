@@ -48,17 +48,9 @@ public class Complaint {
     @JoinColumn(name = "district_id", nullable = false)
     private District district;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "revenue_division_id")
-    private RevenueDivision revenueDivision;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "taluk_id")
-    private Taluk taluk;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "local_body_id")
-    private LocalBody localBody;
+    private String revenueDivisionName;
+    private String talukName;
+    private String localBodyName;
 
     private String locationAddress;
     private Double latitude;

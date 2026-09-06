@@ -23,18 +23,15 @@ const CreateComplaint = () => {
   title: '',
   description: '',
   districtId: '',
-  revenueDivisionId: '',
-  talukId: '',
-  localBodyId: '',
+  revenueDivisionName: '',
+  talukName: '',
+  localBodyName: '',
   locationAddress: '',
   latitude: '',
   longitude: ''
 });
   const [image, setImage] = useState(null);
   const [districts, setDistricts] = useState([]);
-  const [divisions, setDivisions] = useState([]);
-  const [taluks, setTaluks] = useState([]);
-  const [localBodies, setLocalBodies] = useState([]);
   const [successData, setSuccessData] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -51,87 +48,12 @@ const CreateComplaint = () => {
     loadReferenceData();
   }, []);
 
-  // Cascading Auto-Select Logic
-  useEffect(() => {
-    if (divisions.length === 1 && !formData.revenueDivisionId) {
-      const id = String(divisions[0].id);
-      setFormData(prev => ({ ...prev, revenueDivisionId: id }));
-      locationService.getTaluks(id).then(res => {
-        if (res.success) setTaluks(res.data);
-      });
-    }
-  }, [divisions, formData.revenueDivisionId]);
-
-  useEffect(() => {
-    if (taluks.length === 1 && !formData.talukId) {
-      const id = String(taluks[0].id);
-      setFormData(prev => ({ ...prev, talukId: id }));
-      locationService.getLocalBodies(id).then(res => {
-        if (res.success) setLocalBodies(res.data);
-      });
-    }
-  }, [taluks, formData.talukId]);
-
-  useEffect(() => {
-    if (localBodies.length === 1 && !formData.localBodyId) {
-      setFormData(prev => ({ ...prev, localBodyId: String(localBodies[0].id) }));
-    }
-  }, [localBodies, formData.localBodyId]);
-
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-
-    if (name === 'districtId') {
-      setDivisions([]);
-      setTaluks([]);
-      setLocalBodies([]);
-
-      setFormData(prev => ({
-        ...prev,
-        districtId: value,
-        revenueDivisionId: '',
-        talukId: '',
-        localBodyId: ''
-      }));
-
-      if (value) {
-        const divRes = await locationService.getRevenueDivisions(value);
-        if (divRes.success) setDivisions(divRes.data);
-      }
-    } else if (name === 'revenueDivisionId') {
-      setTaluks([]);
-      setLocalBodies([]);
-
-      setFormData(prev => ({
-        ...prev,
-        revenueDivisionId: value,
-        talukId: '',
-        localBodyId: ''
-      }));
-
-      if (value) {
-        const talukRes = await locationService.getTaluks(value);
-        if (talukRes.success) setTaluks(talukRes.data);
-      }
-    } else if (name === 'talukId') {
-      setLocalBodies([]);
-
-      setFormData(prev => ({
-        ...prev,
-        talukId: value,
-        localBodyId: ''
-      }));
-
-      if (value) {
-        const localBodyRes = await locationService.getLocalBodies(value);
-        if (localBodyRes.success) setLocalBodies(localBodyRes.data);
-      }
-    }
   };
 
   const handleImageChange = (e) => {
@@ -200,13 +122,13 @@ const CreateComplaint = () => {
       const complaintData = {
         title: formData.title, description: formData.description,
         districtId: Number(formData.districtId), locationAddress: formData.locationAddress,
-        revenueDivisionId: formData.revenueDivisionId ? Number(formData.revenueDivisionId) : null,
-        talukId: formData.talukId ? Number(formData.talukId) : null,
+        revenueDivisionName: formData.revenueDivisionName || null,
+        talukName: formData.talukName || null,
+        localBodyName: formData.localBodyName || null,
         latitude: formData.latitude
   ? Number(formData.latitude)
   : null,
-
-longitude: formData.longitude
+        longitude: formData.longitude
   ? Number(formData.longitude)
   : null,
       };
@@ -286,47 +208,32 @@ longitude: formData.longitude
     );
   }
 
-  const handleDistrictDetected = useCallback(async (districtName) => {
+  const handleLocationDetailsDetected = useCallback(async ({ district: districtName, taluk, localBody, revenueDivision }) => {
     try {
-      // 1. Find District in our database
-      const response = await api.get(
-        `/reference/districts/by-name?name=${encodeURIComponent(districtName)}`
-      );
-  
-      const district = response.data?.data;
-  
-      if (!district) {
-        console.warn('District not found:', districtName);
-        return;
+      let detectedDistrictId = formData.districtId;
+
+      if (districtName) {
+        const response = await api.get(
+          `/reference/districts/by-name?name=${encodeURIComponent(districtName)}`
+        );
+        const district = response.data?.data;
+        if (district) {
+          detectedDistrictId = String(district.id);
+        }
       }
   
-      // 2. Set District
       setFormData(prev => ({
         ...prev,
-        districtId: String(district.id),
-        revenueDivisionId: '',
-        talukId: '',
-        localBodyId: '',
+        districtId: detectedDistrictId,
+        revenueDivisionName: revenueDivision || '',
+        talukName: taluk || '',
+        localBodyName: localBody || '',
       }));
   
-      // 3. Load Revenue Divisions
-      const divRes = await locationService.getRevenueDivisions(district.id);
-  
-      if (!divRes.success) {
-        setDivisions([]);
-        return;
-      }
-  
-      setDivisions(divRes.data);
-  
-      // Don't automatically guess Revenue Division yet
-      setTaluks([]);
-      setLocalBodies([]);
-  
     } catch (error) {
-      console.error('Automatic district detection failed:', error);
+      console.error('Automatic location detection failed:', error);
     }
-  }, []);
+  }, [formData.districtId]);
 
   const handleMapLocationChange = useCallback(({ lat, lng }) => {
     setFormData(prev => ({
@@ -449,46 +356,38 @@ longitude: formData.longitude
             </div>
             <div className="form-group">
               <label className="form-label">Revenue Division</label>
-              <select name="revenueDivisionId" className="form-control" value={formData.revenueDivisionId} onChange={handleChange} disabled={!formData.districtId}>
-                <option value="">Select (Optional)</option>
-                {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
+              <input
+                type="text"
+                name="revenueDivisionName"
+                className="form-control"
+                placeholder="Auto-detected (Optional)"
+                value={formData.revenueDivisionName}
+                onChange={handleChange}
+              />
             </div>
             
             <div className="form-group">
               <label className="form-label">Taluk</label>
-              <select
-                name="talukId"
+              <input
+                type="text"
+                name="talukName"
                 className="form-control"
-                value={formData.talukId}
+                placeholder="Auto-detected (Optional)"
+                value={formData.talukName}
                 onChange={handleChange}
-                disabled={!formData.revenueDivisionId}
-              >
-                <option value="">Select Taluk</option>
-                {taluks.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             
             <div className="form-group">
               <label className="form-label">Local Body</label>
-              <select
-                name="localBodyId"
+              <input
+                type="text"
+                name="localBodyName"
                 className="form-control"
-                value={formData.localBodyId}
+                placeholder="Auto-detected (Optional)"
+                value={formData.localBodyName}
                 onChange={handleChange}
-                disabled={!formData.talukId}
-              >
-                <option value="">Select Local Body</option>
-                {localBodies.map(l => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div className="form-group col-span-2">
   <label className="form-label">
@@ -500,7 +399,7 @@ longitude: formData.longitude
     longitude={formData.longitude}
     onLocationChange={handleMapLocationChange}
     onAddressChange={handleMapAddressChange}
-    onDistrictDetected={handleDistrictDetected}
+    onLocationDetailsDetected={handleLocationDetailsDetected}
   />
 </div>
 <div className="form-group col-span-2" style={{ marginTop: '0.5rem' }}>
