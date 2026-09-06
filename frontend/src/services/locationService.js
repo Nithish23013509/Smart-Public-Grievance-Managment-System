@@ -39,9 +39,14 @@ const locationService = {
     return { data: filtered, success: true };
   },
   
-  getLocalBodies: async (districtId) => {
-    const filtered = MOCK_LOCAL_BODIES.filter(l => l.districtId === Number(districtId));
-    return { data: filtered, success: true };
+  getLocalBodies: async (talukId) => {
+    try {
+      const response = await api.get(`/reference/local-bodies/${talukId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching local bodies:', error);
+      return { data: [], success: false };
+    }
   }
 };
 
