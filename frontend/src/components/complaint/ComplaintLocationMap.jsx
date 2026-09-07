@@ -226,6 +226,15 @@ function MapContent({ position, onLocationChange, onAddressFound, onLocationDeta
     [map, onLocationChange]
   );
 
+  useEffect(() => {
+    if (map && position) {
+      map.panTo(position);
+      if (map.getZoom() < 15) {
+        map.setZoom(16);
+      }
+    }
+  }, [map, position]);
+
   return (
     <div
       style={{
