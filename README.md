@@ -69,27 +69,6 @@ The NLP service analyzes the complaint and helps classify it into the appropriat
 
 This improves accessibility for users who naturally communicate using Tamil-English code-mixed language.
 
----
-
-### 🔎 Duplicate Complaint Detection
-
-The system analyzes newly submitted grievances against existing complaints to identify potentially similar or duplicate issues.
-
-For example:
-
-* "Street light not working near bus stop"
-* "Bus stop pakkathula street light work aagala"
-
-These complaints may refer to the same underlying issue.
-
-Duplicate detection can help authorities:
-
-* Reduce repeated complaints
-* Identify recurring public issues
-* Consolidate similar grievances
-* Prioritize problems affecting multiple citizens
-
----
 
 ### 📍 Location-Based Grievance Management
 
