@@ -19,12 +19,13 @@ public class SpeechService {
 
     private static final Logger log = LoggerFactory.getLogger(SpeechService.class);
     private static final String GROK_STT_URL = "https://api.x.ai/v1/stt";
+    private static final String GROQ_STT_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 
     private final String apiKey;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public SpeechService(@Value("${xai.api-key:}") String apiKey) {
+    public SpeechService(@Value("${xai.api-key:${groq.api-key:}}") String apiKey) {
         this.apiKey = apiKey;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
@@ -32,12 +33,16 @@ public class SpeechService {
 
     public String transcribe(MultipartFile file) throws Exception {
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("XAI_API_KEY is not configured");
+            throw new IllegalStateException("Speech-to-text API key is not configured");
         }
 
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Audio file is empty");
         }
+
+        boolean isGroq = apiKey.startsWith("gsk_");
+        String endpoint = isGroq ? GROQ_STT_URL : GROK_STT_URL;
+        String model = isGroq ? "whisper-large-v3-turbo" : "grok-voice-transcribe-2.0";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -48,20 +53,19 @@ public class SpeechService {
         ByteArrayResource fileAsResource = new ByteArrayResource(file.getBytes()) {
             @Override
             public String getFilename() {
-                // Must provide a filename so RestTemplate knows it's a file
                 String originalName = file.getOriginalFilename();
-                return (originalName != null && !originalName.isBlank()) ? originalName : "audio.wav";
+                return (originalName != null && !originalName.isBlank()) ? originalName : "recording.webm";
             }
         };
 
         body.add("file", fileAsResource);
-        body.add("model", "grok-voice-transcribe-2.0");
+        body.add("model", model);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    GROK_STT_URL,
+                    endpoint,
                     requestEntity,
                     String.class
             );
@@ -71,18 +75,18 @@ public class SpeechService {
                 if (root.has("text")) {
                     return root.get("text").asText();
                 } else {
-                    log.error("Grok API response missing 'text' field");
+                    log.error("Speech API response missing 'text' field: {}", response.getBody());
                     throw new RuntimeException("Unexpected API response format");
                 }
             } else {
-                log.error("Grok API error: {}", response.getStatusCode());
+                log.error("Speech API error: {}", response.getStatusCode());
                 throw new RuntimeException("Speech-to-text API failed");
             }
         } catch (HttpClientErrorException e) {
-            log.error("Grok API client error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Speech API client error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("Speech-to-text service error: " + e.getStatusCode());
         } catch (Exception e) {
-            log.error("Failed to call Grok API: {}", e.getMessage());
+            log.error("Failed to call Speech API: {}", e.getMessage());
             throw new RuntimeException("Failed to transcribe audio");
         }
     }
