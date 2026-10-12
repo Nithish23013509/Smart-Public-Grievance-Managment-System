@@ -20,7 +20,8 @@ public class SpeechController {
 
     @PostMapping("/transcribe")
     public ResponseEntity<?> transcribe(
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "language", required = false) String language) {
 
         try {
 
@@ -31,7 +32,7 @@ public class SpeechController {
                         ));
             }
 
-            String text = speechService.transcribe(file);
+            String text = speechService.transcribe(file, language);
 
             return ResponseEntity.ok(
                     Map.of(

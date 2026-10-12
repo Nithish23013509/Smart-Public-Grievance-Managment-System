@@ -32,6 +32,10 @@ public class SpeechService {
     }
 
     public String transcribe(MultipartFile file) throws Exception {
+        return transcribe(file, null);
+    }
+
+    public String transcribe(MultipartFile file, String language) throws Exception {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("Speech-to-text API key is not configured");
         }
@@ -42,7 +46,7 @@ public class SpeechService {
 
         boolean isGroq = apiKey.startsWith("gsk_");
         String endpoint = isGroq ? GROQ_STT_URL : GROK_STT_URL;
-        String model = isGroq ? "whisper-large-v3-turbo" : "grok-voice-transcribe-2.0";
+        String model = isGroq ? "whisper-large-v3" : "grok-voice-transcribe-2.0";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -60,6 +64,14 @@ public class SpeechService {
 
         body.add("file", fileAsResource);
         body.add("model", model);
+
+        if (isGroq) {
+            // Bias the model towards Tamil and English vocabulary for grievance systems
+            body.add("prompt", "தமிழ் மற்றும் ஆங்கிலத்தில் பொது மக்கள் குறைதீர்ப்பு முறைப்பாடு. Tamil and English public grievance complaint.");
+            if (language != null && !language.isBlank()) {
+                body.add("language", language.trim());
+            }
+        }
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 

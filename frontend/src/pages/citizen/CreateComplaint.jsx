@@ -33,6 +33,7 @@ const CreateComplaint = () => {
   const [image, setImage] = useState(null);
   const [districts, setDistricts] = useState([]);
   const [successData, setSuccessData] = useState(null);
+  const [speechLang, setSpeechLang] = useState('ta');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -92,7 +93,7 @@ const CreateComplaint = () => {
         setIsTranscribing(true);
         setError('');
         try {
-          const result = await speechService.transcribe(audioBlob);
+          const result = await speechService.transcribe(audioBlob, speechLang);
           if (result.text) {
             setFormData(prev => ({
               ...prev,
@@ -309,34 +310,56 @@ const CreateComplaint = () => {
                 value={formData.title} onChange={handleChange} required minLength={5} maxLength={150} />
             </div>
             <div className="form-group col-span-2">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <label className="form-label" style={{ marginBottom: 0 }}>Description *</label>
-                <button
-                  type="button"
-                  onClick={handleMicClick}
-                  disabled={isTranscribing}
-                  title={isRecording ? 'Stop recording' : 'Record voice'}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-lg)',
-                    border: isRecording ? '2px solid var(--color-error)' : '2px solid var(--color-primary)',
-                    background: isRecording ? 'rgba(197,48,48,0.1)' : 'var(--color-primary)',
-                    color: isRecording ? 'var(--color-error)' : '#ffffff',
-                    cursor: isTranscribing ? 'wait' : 'pointer',
-                    fontSize: '0.95rem', fontWeight: 700, fontFamily: 'inherit',
-                    transition: 'var(--transition)',
-                    boxShadow: isRecording ? 'none' : 'var(--shadow-sm)',
-                    animation: isRecording ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
-                  }}
-                >
-                  {isTranscribing ? (
-                    <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Transcribing...</>
-                  ) : isRecording ? (
-                    <><MicOff size={18} /> Stop Recording</>
-                  ) : (
-                    <><Mic size={18} /> Voice Input</>
-                  )}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <select
+                    value={speechLang}
+                    onChange={(e) => setSpeechLang(e.target.value)}
+                    disabled={isRecording || isTranscribing}
+                    style={{
+                      padding: '0.55rem 0.8rem',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '1.5px solid var(--color-border, #cbd5e1)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      background: 'var(--color-surface, #ffffff)',
+                      color: 'var(--color-text, #1e293b)',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                    title="Select voice input language"
+                  >
+                    <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+                    <option value="en">🌐 English</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleMicClick}
+                    disabled={isTranscribing}
+                    title={isRecording ? 'Stop recording' : 'Record voice'}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-lg)',
+                      border: isRecording ? '2px solid var(--color-error)' : '2px solid var(--color-primary)',
+                      background: isRecording ? 'rgba(197,48,48,0.1)' : 'var(--color-primary)',
+                      color: isRecording ? 'var(--color-error)' : '#ffffff',
+                      cursor: isTranscribing ? 'wait' : 'pointer',
+                      fontSize: '0.95rem', fontWeight: 700, fontFamily: 'inherit',
+                      transition: 'var(--transition)',
+                      boxShadow: isRecording ? 'none' : 'var(--shadow-sm)',
+                      animation: isRecording ? 'mic-pulse 1.5s ease-in-out infinite' : 'none',
+                    }}
+                  >
+                    {isTranscribing ? (
+                      <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Transcribing...</>
+                    ) : isRecording ? (
+                      <><MicOff size={18} /> Stop Recording</>
+                    ) : (
+                      <><Mic size={18} /> Voice Input</>
+                    )}
+                  </button>
+                </div>
               </div>
               <textarea name="description" className="form-control" placeholder="Describe the problem in detail — the AI uses this to route your complaint..." rows={4}
                 value={formData.description} onChange={handleChange} required minLength={10} />
