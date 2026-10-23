@@ -40,6 +40,8 @@ public class ComplaintService {
     private final FileStorageService fileStorageService;
     private final NotificationService notificationService;
     private final AiRecommendationService aiRecommendationService;
+    private final DuplicateDetectionService duplicateDetectionService;
+    private final ComplaintDuplicateCandidateRepository duplicateCandidateRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     private final com.example.grievance.config.AiRoutingProperties routingProperties;
 
@@ -172,7 +174,34 @@ public class ComplaintService {
         complaint.setTalukName(request.getTalukName());
         complaint.setLocalBodyName(request.getLocalBodyName());
 
+        if (request.getDuplicateOfId() != null) {
+            Complaint original = complaintRepository.findById(request.getDuplicateOfId()).orElse(null);
+            if (original != null) {
+                complaint.setDuplicateOf(original);
+                complaint.setDuplicateStatus(com.example.grievance.entity.enums.DuplicateStatus.CONFIRMED_DUPLICATE);
+            }
+        }
+
         complaint = complaintRepository.save(complaint);
+
+        // Run duplicate detection & generate embedding asynchronously / safely
+        try {
+            duplicateDetectionService.getOrGenerateEmbedding(complaint);
+            if (complaint.getDuplicateOf() == null) {
+                CheckDuplicateRequest dupReq = new CheckDuplicateRequest();
+                dupReq.setTitle(complaint.getTitle());
+                dupReq.setDescription(complaint.getDescription());
+                dupReq.setDistrictId(complaint.getDistrict().getId());
+                dupReq.setCategoryId(complaint.getCategory() != null ? complaint.getCategory().getId() : null);
+                dupReq.setLatitude(complaint.getLatitude());
+                dupReq.setLongitude(complaint.getLongitude());
+
+                CheckDuplicateResponse dupCheck = duplicateDetectionService.checkDuplicates(dupReq, complaint.getId());
+                duplicateDetectionService.recordDuplicateCandidates(complaint, dupCheck);
+            }
+        } catch (Exception e) {
+            log.warn("Non-fatal: duplicate check failed during complaint creation: {}", e.getMessage());
+        }
 
         // Create initial status history
         createStatusHistory(complaint, null, ComplaintStatus.SUBMITTED, "Complaint registered", citizen);
@@ -574,8 +603,75 @@ public class ComplaintService {
         builder.revenueDivisionName(c.getRevenueDivisionName());
         builder.talukName(c.getTalukName());
         builder.localBodyName(c.getLocalBodyName());
+        if (c.getDuplicateOf() != null) {
+            builder.duplicateOfId(c.getDuplicateOf().getId())
+                    .duplicateOfComplaintNumber(c.getDuplicateOf().getComplaintNumber());
+        }
+        if (c.getDuplicateStatus() != null) {
+            builder.duplicateStatus(c.getDuplicateStatus().name());
+        }
+        builder.duplicateSimilarityScore(c.getDuplicateSimilarityScore());
 
         return builder.build();
+    }
+
+    @Transactional(readOnly = true)
+    public CheckDuplicateResponse checkDuplicates(CheckDuplicateRequest request) {
+        return duplicateDetectionService.checkDuplicates(request, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DuplicateCandidateResponse> getDuplicateCandidates(Long complaintId) {
+        List<ComplaintDuplicateCandidate> candidates = duplicateCandidateRepository.findWithDetailsByComplaintId(complaintId);
+        return candidates.stream().map(c -> DuplicateCandidateResponse.builder()
+                .complaintId(c.getCandidateComplaint().getId())
+                .complaintNumber(c.getCandidateComplaint().getComplaintNumber())
+                .title(c.getCandidateComplaint().getTitle())
+                .description(c.getCandidateComplaint().getDescription())
+                .categoryName(c.getCandidateComplaint().getCategory() != null ? c.getCandidateComplaint().getCategory().getName() : "General")
+                .departmentName(c.getCandidateComplaint().getDepartment() != null ? c.getCandidateComplaint().getDepartment().getName() : "General")
+                .status(c.getCandidateComplaint().getStatus().name())
+                .similarityScore(c.getSimilarityScore())
+                .similarityPercentage((int) Math.round(c.getSimilarityScore() * 100))
+                .distanceKm(c.getDistanceKm())
+                .categoryMatch(c.getCategoryMatch())
+                .matchTier(c.getSimilarityScore() >= 0.82 ? "HIGH_CONFIDENCE" : "POSSIBLE_DUPLICATE")
+                .locationAddress(c.getCandidateComplaint().getLocationAddress())
+                .createdAt(c.getCandidateComplaint().getCreatedAt())
+                .build()
+        ).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void reviewDuplicateCandidate(Long complaintId, Long candidateId, DuplicateReviewRequest request, CustomUserDetails officerUser) {
+        ComplaintDuplicateCandidate candidate = duplicateCandidateRepository.findById(candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Duplicate candidate record not found with id: " + candidateId));
+
+        User officer = userRepository.findById(officerUser.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + officerUser.getId()));
+
+        if ("CONFIRM".equalsIgnoreCase(request.getAction())) {
+            candidate.setStatus(com.example.grievance.entity.enums.CandidateStatus.CONFIRMED);
+            candidate.setReviewedBy(officer);
+            candidate.setReviewedAt(LocalDateTime.now());
+            candidate.setReviewNotes(request.getNotes());
+
+            Complaint complaint = candidate.getComplaint();
+            complaint.setDuplicateOf(candidate.getCandidateComplaint());
+            complaint.setDuplicateStatus(com.example.grievance.entity.enums.DuplicateStatus.CONFIRMED_DUPLICATE);
+            complaint.setDuplicateSimilarityScore(candidate.getSimilarityScore());
+            complaintRepository.save(complaint);
+        } else if ("REJECT".equalsIgnoreCase(request.getAction())) {
+            candidate.setStatus(com.example.grievance.entity.enums.CandidateStatus.REJECTED);
+            candidate.setReviewedBy(officer);
+            candidate.setReviewedAt(LocalDateTime.now());
+            candidate.setReviewNotes(request.getNotes());
+
+            Complaint complaint = candidate.getComplaint();
+            complaint.setDuplicateStatus(com.example.grievance.entity.enums.DuplicateStatus.REJECTED_DUPLICATE);
+            complaintRepository.save(complaint);
+        }
+        duplicateCandidateRepository.save(candidate);
     }
 
     private StatusHistoryResponse mapToHistoryResponse(ComplaintStatusHistory h) {

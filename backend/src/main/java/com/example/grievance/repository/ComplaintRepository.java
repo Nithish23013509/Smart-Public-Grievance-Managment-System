@@ -47,4 +47,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     java.util.List<Object[]> getCategoryWiseAiDistribution();
 
     java.util.List<Complaint> findByAiDecisionIsNotNull();
+
+    @Query("SELECT c FROM Complaint c WHERE c.district.id = :districtId AND c.status IN :statuses")
+    java.util.List<Complaint> findCandidatesByDistrictAndStatuses(Long districtId, java.util.List<ComplaintStatus> statuses);
+
+    @Query("SELECT c FROM Complaint c WHERE c.status IN :statuses")
+    java.util.List<Complaint> findCandidatesByStatuses(java.util.List<ComplaintStatus> statuses);
 }

@@ -92,6 +92,45 @@ public class ComplaintController {
     }
 
     /**
+     * Check for potential semantic duplicates before submitting a complaint.
+     */
+    @PostMapping("/check-duplicates")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public ResponseEntity<ApiResponse<CheckDuplicateResponse>> checkDuplicates(
+            @Valid @RequestBody CheckDuplicateRequest request) {
+
+        CheckDuplicateResponse response = complaintService.checkDuplicates(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Get duplicate candidate audit list for a complaint (Officers and Admins).
+     */
+    @GetMapping("/{id}/duplicates")
+    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<DuplicateCandidateResponse>>> getDuplicateCandidates(
+            @PathVariable Long id) {
+
+        List<DuplicateCandidateResponse> response = complaintService.getDuplicateCandidates(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Officer reviews and confirms or rejects a duplicate candidate relationship.
+     */
+    @PostMapping("/{id}/duplicates/{candidateId}/review")
+    @PreAuthorize("hasAnyRole('OFFICER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> reviewDuplicateCandidate(
+            @PathVariable Long id,
+            @PathVariable Long candidateId,
+            @Valid @RequestBody DuplicateReviewRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        complaintService.reviewDuplicateCandidate(id, candidateId, request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Duplicate candidate reviewed successfully", null));
+    }
+
+    /**
      * Citizen closes a RESOLVED complaint.
      */
     @PutMapping("/{id}/close")

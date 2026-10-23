@@ -12,7 +12,7 @@ import speechService from '../../services/speechService';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import AiDecisionBadge from '../../components/common/AiDecisionBadge';
 import ConfidenceMeter from '../../components/common/ConfidenceMeter';
-import { ArrowLeft, ArrowRight, ClipboardList, Upload, Sparkles, CheckCircle2, Mic, MicOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ClipboardList, Upload, Sparkles, CheckCircle2, Mic, MicOff, Loader2, AlertTriangle, ExternalLink, RefreshCw, Layers } from 'lucide-react';
 import ComplaintLocationMap from '../../components/complaint/ComplaintLocationMap';
 
 const CreateComplaint = () => {
@@ -36,6 +36,10 @@ const CreateComplaint = () => {
   const [speechLang, setSpeechLang] = useState('ta');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [duplicateCheckResult, setDuplicateCheckResult] = useState(null);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateCheckError, setDuplicateCheckError] = useState('');
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
@@ -116,24 +120,67 @@ const CreateComplaint = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setLoading(true); setError('');
+  const performDuplicateCheck = async (complaintData, triggerModal = true) => {
+    if (!complaintData.description || complaintData.description.trim().length < 5) return false;
+    setIsCheckingDuplicates(true);
+    setDuplicateCheckError('');
+    try {
+      const res = await complaintService.checkDuplicates({
+        title: complaintData.title || 'Complaint Draft',
+        description: complaintData.description,
+        districtId: complaintData.districtId ? Number(complaintData.districtId) : null,
+        latitude: complaintData.latitude ? Number(complaintData.latitude) : null,
+        longitude: complaintData.longitude ? Number(complaintData.longitude) : null,
+      });
+      if (res.success && res.data) {
+        setDuplicateCheckResult(res.data);
+        if (res.data.hasDuplicates && res.data.candidates?.length > 0) {
+          if (triggerModal) {
+            setShowDuplicateModal(true);
+          }
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.warn('Duplicate detection service check failed:', err);
+      setDuplicateCheckError('Duplicate check service temporarily unavailable. You can proceed with registration.');
+      return false;
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+  };
+
+  const handleSubmit = async (e, forceSubmit = false, linkedDuplicateOfId = null) => {
+    if (e) e.preventDefault();
+    setError('');
+
+    const complaintData = {
+      title: formData.title,
+      description: formData.description,
+      districtId: Number(formData.districtId),
+      locationAddress: formData.locationAddress,
+      revenueDivisionName: formData.revenueDivisionName || null,
+      talukName: formData.talukName || null,
+      localBodyName: formData.localBodyName || null,
+      latitude: formData.latitude ? Number(formData.latitude) : null,
+      longitude: formData.longitude ? Number(formData.longitude) : null,
+      duplicateOfId: linkedDuplicateOfId || null
+    };
+
+    // Pre-submission duplicate check
+    if (!forceSubmit && !duplicateCheckResult) {
+      setLoading(true);
+      const foundDuplicates = await performDuplicateCheck(complaintData, true);
+      setLoading(false);
+      if (foundDuplicates) {
+        return; // Modal opened for user review
+      }
+    }
+
+    setLoading(true);
     try {
       let response;
-      const complaintData = {
-        title: formData.title, description: formData.description,
-        districtId: Number(formData.districtId), locationAddress: formData.locationAddress,
-        revenueDivisionName: formData.revenueDivisionName || null,
-        talukName: formData.talukName || null,
-        localBodyName: formData.localBodyName || null,
-        latitude: formData.latitude
-  ? Number(formData.latitude)
-  : null,
-        longitude: formData.longitude
-  ? Number(formData.longitude)
-  : null,
-      };
-
       if (image) {
         const data = new FormData();
         data.append('complaint', new Blob([JSON.stringify(complaintData)], { type: "application/json" }));
@@ -143,6 +190,7 @@ const CreateComplaint = () => {
         response = await complaintService.createComplaint(complaintData);
       }
       if (response.success) {
+        setShowDuplicateModal(false);
         setSuccessData(response.data);
       }
     } catch (err) {
@@ -363,6 +411,54 @@ const CreateComplaint = () => {
               </div>
               <textarea name="description" className="form-control" placeholder="Describe the problem in detail — the AI uses this to route your complaint..." rows={4}
                 value={formData.description} onChange={handleChange} required minLength={10} />
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!formData.description || formData.description.trim().length < 10) {
+                      setError('Please enter at least 10 characters in the description before checking.');
+                      return;
+                    }
+                    performDuplicateCheck({
+                      title: formData.title,
+                      description: formData.description,
+                      districtId: formData.districtId,
+                      latitude: formData.latitude,
+                      longitude: formData.longitude,
+                    }, true);
+                  }}
+                  disabled={isCheckingDuplicates || !formData.description}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-primary, #0284c7)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                  title="Check if similar issues were already submitted nearby"
+                >
+                  {isCheckingDuplicates ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Layers size={13} />}
+                  Check Similar Complaints / ஒத்த புகார்களை சரிபார்க்கவும்
+                </button>
+                {duplicateCheckResult?.hasDuplicates && (
+                  <span style={{ fontSize: '0.78rem', color: '#b45309', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <AlertTriangle size={13} /> {duplicateCheckResult.candidates.length} similar existing issue(s) detected nearby
+                  </span>
+                )}
+              </div>
+
+              {duplicateCheckError && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                  {duplicateCheckError}
+                </div>
+              )}
+
               {isRecording && (
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-error)', display: 'inline-block', animation: 'mic-pulse 1s ease-in-out infinite' }}></span>
@@ -464,6 +560,124 @@ const CreateComplaint = () => {
           </div>
         </form>
       </div>
+
+      {/* ——— Duplicate Complaints Review Modal ——— */}
+      {showDuplicateModal && duplicateCheckResult?.candidates && (
+        <div className="modal-overlay" onClick={() => setShowDuplicateModal(false)} style={{ zIndex: 1100 }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <AlertTriangle size={24} color="#d97706" />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '0.2rem' }}>
+                  Similar Complaints Found / அருகில் உள்ள ஒத்த முறைப்பாடுகள்
+                </h2>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', lineHeight: 1.4 }}>
+                  Our AI detected similar unresolved issues in this area. If your issue is already reported, you can view the existing complaint to follow its status, or continue submitting yours as a new issue.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              {duplicateCheckResult.candidates.map((cand) => (
+                <div
+                  key={cand.complaintId}
+                  style={{
+                    border: '1.5px solid var(--color-border, #e2e8f0)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '1rem',
+                    background: '#fafafa',
+                    transition: 'var(--transition)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '0.9rem' }}>
+                        #{cand.complaintNumber}
+                      </span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: '#e0f2fe',
+                        color: '#0369a1'
+                      }}>
+                        {cand.categoryName}
+                      </span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: cand.status === 'RESOLVED' ? '#dcfce7' : '#fef9c3',
+                        color: cand.status === 'RESOLVED' ? '#15803d' : '#a16207'
+                      }}>
+                        {cand.status}
+                      </span>
+                    </div>
+
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: cand.matchTier === 'HIGH_CONFIDENCE' ? '#fee2e2' : '#fef3c7',
+                      color: cand.matchTier === 'HIGH_CONFIDENCE' ? '#b91c1c' : '#b45309'
+                    }} title="Cosine similarity based on paraphrase-multilingual-MiniLM-L12-v2">
+                      {cand.similarityPercentage}% Semantic Match Score
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '0.88rem', color: 'var(--color-text)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
+                    {cand.description && cand.description.length > 180 ? cand.description.substring(0, 180) + '...' : cand.description}
+                  </p>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--color-text-muted)', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <span>
+                      {cand.distanceKm != null ? `📍 Approx. ${cand.distanceKm} km away` : cand.locationAddress || 'Same district'}
+                    </span>
+                    <a
+                      href={`/citizen/complaints/${cand.complaintId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        color: 'var(--color-primary)',
+                        fontWeight: 600,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      View Complaint Details <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setShowDuplicateModal(false)}
+              >
+                Cancel & Edit / திருத்து
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => handleSubmit(null, true)}
+                disabled={loading}
+              >
+                {loading ? 'Submitting...' : 'Continue Submitting as New / புதிய புகாராக தொடர்க'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

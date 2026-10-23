@@ -73,6 +73,20 @@ public class Complaint {
 
     private LocalDateTime aiReviewedAt;
 
+    // Semantic Duplicate Detection
+    @Column(columnDefinition = "TEXT")
+    private String embeddingJson;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "duplicate_of_id")
+    private Complaint duplicateOf;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duplicate_status")
+    private com.example.grievance.entity.enums.DuplicateStatus duplicateStatus = com.example.grievance.entity.enums.DuplicateStatus.ORIGINAL;
+
+    private Double duplicateSimilarityScore;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ComplaintStatus status = ComplaintStatus.SUBMITTED;

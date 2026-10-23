@@ -32,4 +32,6 @@ public class CreateComplaintRequest {
 
     private Double latitude;
     private Double longitude;
+
+    private Long duplicateOfId;
 }

@@ -6,6 +6,21 @@ const complaintService = {
     return response.data;
   },
 
+  checkDuplicates: async (data) => {
+    const response = await api.post('/complaints/check-duplicates', data);
+    return response.data;
+  },
+
+  getDuplicateCandidates: async (complaintId) => {
+    const response = await api.get(`/complaints/${complaintId}/duplicates`);
+    return response.data;
+  },
+
+  reviewDuplicateCandidate: async (complaintId, candidateId, data) => {
+    const response = await api.post(`/complaints/${complaintId}/duplicates/${candidateId}/review`, data);
+    return response.data;
+  },
+
   createComplaintWithImage: async (formData) => {
     const response = await api.post('/complaints/with-image', formData, {
       headers: {

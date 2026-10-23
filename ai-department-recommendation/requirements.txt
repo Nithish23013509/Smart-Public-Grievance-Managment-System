@@ -6,3 +6,4 @@ joblib
 matplotlib
 Flask
 gunicorn
+sentence-transformers

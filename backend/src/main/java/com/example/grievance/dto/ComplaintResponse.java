@@ -56,6 +56,12 @@ public class ComplaintResponse {
     private String aiReviewerName;
     private LocalDateTime aiReviewedAt;
 
+    // Duplicate Detection Status
+    private Long duplicateOfId;
+    private String duplicateOfComplaintNumber;
+    private String duplicateStatus;
+    private Double duplicateSimilarityScore;
+
     // Status
     private String status;
 
